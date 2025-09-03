@@ -70,9 +70,9 @@ const Layout = () => {
   const isActive = (path) => location.pathname === path
 
   return (
-    <div className="min-h-screen bg-eco-gray-50">
+    <div className="min-h-screen h-screen bg-eco-gray-50 flex flex-col overflow-hidden">
       {/* Header mejorado */}
-      <header className="bg-eco-gray-800 text-white shadow-lg border-b border-eco-green-500">
+      <header className="bg-eco-gray-800 text-white shadow-lg border-b border-eco-green-500 z-50 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -105,9 +105,11 @@ const Layout = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden"> {/* Quitamos altura fija y usamos flex-1 */}
         {/* Sidebar mejorado */}
-        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-eco-green-50 to-eco-green-100 border-r border-eco-green-200 transform transition-all duration-500 ease-in-out lg:transition-none shadow-xl lg:shadow-none animate-slide-down`}>
+        <aside className={`${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 fixed lg:relative inset-y-0 left-0 z-40 w-72 bg-gradient-to-b from-eco-green-50 to-eco-green-100 border-r border-eco-green-200 transform transition-all duration-500 ease-in-out lg:transition-none shadow-xl lg:shadow-none h-full flex-shrink-0 overflow-y-auto`}>
           <div className="flex flex-col h-full">
             {/* Logo del sidebar */}
             <div className="p-6 border-b border-eco-green-200">
@@ -173,8 +175,8 @@ const Layout = () => {
         </aside>
 
         {/* Contenido principal */}
-        <main className="flex-1 lg:ml-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 overflow-y-auto w-full">
+          <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Outlet />
           </div>
         </main>
@@ -183,7 +185,7 @@ const Layout = () => {
       {/* Overlay para móvil */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
