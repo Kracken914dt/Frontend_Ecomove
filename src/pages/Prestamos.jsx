@@ -25,17 +25,65 @@ const Prestamos = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true)
+      
+      // Primero obtenemos toda la información necesaria
       const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
         usuariosAPI.listar(),
         transportesAPI.listar(),
         estacionesAPI.listar()
       ])
-      setUsuarios(usuariosRes.data)
+
+      // Filtramos usuarios activos
+      const usuariosActivos = usuariosRes.data.filter(
+        usuario => usuario.nombre && usuario.correo && usuario.documento
+      )
+      setUsuarios(usuariosActivos)
+
+      // Guardamos todas las entidades en mapas para búsqueda rápida
+      const transportesMap = transportesRes.data.reduce((map, t) => {
+        map[t.id] = t
+        return map
+      }, {})
       setTransportes(transportesRes.data)
+
+      const estacionesMap = estacionesRes.data.reduce((map, e) => {
+        map[e.id] = e
+        return map
+      }, {})
       setEstaciones(estacionesRes.data)
+
+      const usuariosMap = usuariosActivos.reduce((map, u) => {
+        map[u.id] = u
+        return map
+      }, {})
+
+      // Obtenemos los préstamos por cada usuario activo
+      const prestamosPromesas = usuariosActivos.map(usuario =>
+        prestamosAPI.historialPorUsuario(usuario.id)
+          .then(response => {
+            // Por cada préstamo, agregamos la información relacionada
+            return response.data.map(prestamo => ({
+              ...prestamo,
+              usuario: usuariosMap[prestamo.usuarioId] || { nombre: 'Usuario no encontrado' },
+              transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
+              estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
+              estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
+            }))
+          })
+          .catch(error => {
+            console.error(`Error obteniendo préstamos del usuario ${usuario.id}:`, error)
+            return []
+          })
+      )
+
+      // Esperamos todas las promesas de préstamos
+      const prestamosPorUsuario = await Promise.all(prestamosPromesas)
       
-      // TODO: Cargar préstamos cuando el backend lo soporte
-      setPrestamos([])
+      // Aplanamos el array de arrays de préstamos
+      const todosLosPrestamos = prestamosPorUsuario.flat()
+      
+      setPrestamos(todosLosPrestamos)
+      
     } catch (error) {
       toast.error('Error al cargar datos')
       console.error('Error cargando datos:', error)
@@ -328,7 +376,9 @@ const Prestamos = () => {
           </div>
         ) : filteredPrestamos.length === 0 ? (
           <div className="text-center py-8">
-            <Clock className="mx-auto h-12 w-12 text-eco-gray-400" />
+            <div className="mx-auto h-12 w-12 text-eco-gray-400">
+              <Clock className="h-5 w-5 text-eco-gray-400" />
+            </div>
             <p className="mt-2 text-eco-gray-600">
               {searchTerm ? 'No se encontraron préstamos que coincidan con la búsqueda' : 'No hay préstamos registrados'}
             </p>
@@ -371,7 +421,7 @@ const Prestamos = () => {
                             #{prestamo.id}
                           </div>
                           <div className="text-sm text-eco-gray-500">
-                            {prestamo.inicio ? new Date(prestamo.inicio).toLocaleDateString() : 'Sin fecha'}
+                            {prestamo.inicio ? new Date(prestamo.inicio).toLocaleDateString() : 'Sin fecha'} - {prestamo.fin ? new Date(prestamo.fin).toLocaleDateString() : 'Sin fecha'}
                           </div>
                         </div>
                       </div>
@@ -380,7 +430,7 @@ const Prestamos = () => {
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-eco-gray-400 mr-2" />
                         <span className="text-sm text-eco-gray-900">
-                          Usuario #{prestamo.usuarioId || 'No encontrado'}
+                          {prestamo.usuario?.nombre || 'Usuario no encontrado'}
                         </span>
                       </div>
                     </td>
@@ -388,7 +438,7 @@ const Prestamos = () => {
                       <div className="flex items-center">
                         <Truck className="h-4 w-4 text-eco-gray-400 mr-2" />
                         <span className="text-sm text-eco-gray-900">
-                          Transporte #{prestamo.transporteId || 'No encontrado'}
+                          {prestamo.transporte?.tipo || 'Sin tipo'}
                         </span>
                       </div>
                     </td>
@@ -396,7 +446,9 @@ const Prestamos = () => {
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 text-eco-gray-400 mr-1" />
                         <span>
-                          Estación #{prestamo.estacionOrigenId || 'Origen'} → Estación #{prestamo.estacionDestinoId || 'Destino'}
+                          Estación {prestamo.estacionOrigen?.ubicacion || 'No disponible'} 
+                          <span className="mx-2">→</span> 
+                          Estación {prestamo.estacionDestino?.ubicacion || 'No disponible'}
                         </span>
                       </div>
                     </td>
