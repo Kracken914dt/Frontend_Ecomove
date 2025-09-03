@@ -284,7 +284,7 @@ const Transportes = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-eco-gray-900">
-                            Transporte #{transporte.id}
+                            Transporte {transporte.tipo}
                           </div>
                           <div className="text-sm text-eco-gray-500">
                             ID: {transporte.id}
