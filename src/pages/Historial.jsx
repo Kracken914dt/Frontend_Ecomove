@@ -15,23 +15,24 @@ const Historial = () => {
     cargarDatos()
   }, [])
 
-  const cargarDatos = async () => {
-    try {
-      setLoading(true)
-      const [usuariosRes] = await Promise.all([
-        usuariosAPI.listar()
-      ])
-      setUsuarios(usuariosRes.data)
-      
-      // TODO: Cargar préstamos cuando el backend lo soporte
-      setPrestamos([])
-    } catch (error) {
-      toast.error('Error al cargar datos')
-      console.error('Error cargando datos:', error)
-    } finally {
-      setLoading(false)
-    }
+const cargarDatos = async () => {
+  try {
+    setLoading(true)
+    const [usuariosRes] = await Promise.all([
+      usuariosAPI.listar()
+    ])
+    // Filtrar solo usuarios que tengan datos completos (no borrados)
+    const usuariosActivos = usuariosRes.data.filter(
+      usuario => usuario.nombre && usuario.correo && usuario.documento
+    )
+    setUsuarios(usuariosActivos)
+  } catch (error) {
+    toast.error('Error al cargar datos')
+    console.error('Error cargando datos:', error)
+  } finally {
+    setLoading(false)
   }
+}
 
   const getEstadoColor = (estado) => {
     switch (estado) {

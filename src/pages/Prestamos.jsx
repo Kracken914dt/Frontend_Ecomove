@@ -25,17 +25,38 @@ const Prestamos = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true)
-      const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
+      const [prestamosRes, usuariosRes, transportesRes, estacionesRes] = await Promise.all([
+        prestamosAPI.listar(),
         usuariosAPI.listar(),
         transportesAPI.listar(),
         estacionesAPI.listar()
       ])
-      setUsuarios(usuariosRes.data)
-      setTransportes(transportesRes.data)
-      setEstaciones(estacionesRes.data)
-      
-      // TODO: Cargar préstamos cuando el backend lo soporte
-      setPrestamos([])
+
+      // Filtrar usuarios activos (que tengan datos completos)
+      const usuariosActivos = usuariosRes.data.filter(
+        usuario => usuario.nombre && usuario.correo && usuario.documento
+      )
+      setUsuarios(usuariosActivos)
+
+      // Filtrar estaciones activas (que tengan datos completos)
+      const estacionesActivas = estacionesRes.data.filter(
+        estacion => estacion.ubicacion && estacion.nombre
+      )
+      setEstaciones(estacionesActivas)
+
+      // Filtrar transportes disponibles
+      const transportesActivos = transportesRes.data.filter(
+        transporte => transporte.tipo && transporte.estado === 'DISPONIBLE'
+      )
+      setTransportes(transportesActivos)
+
+      // Filtrar préstamos para mostrar solo los que tienen usuarios activos
+      const prestamosActivos = prestamosRes.data.filter(prestamo => {
+        const usuarioExiste = usuariosActivos.some(u => u.id === prestamo.usuarioId)
+        return usuarioExiste
+      })
+      setPrestamos(prestamosActivos)
+
     } catch (error) {
       toast.error('Error al cargar datos')
       console.error('Error cargando datos:', error)
@@ -84,8 +105,6 @@ const Prestamos = () => {
     }
   }
 
-
-
   const filteredPrestamos = prestamos.filter(prestamo =>
     prestamo.id?.toString().includes(searchTerm) ||
     prestamo.usuario?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -94,7 +113,7 @@ const Prestamos = () => {
   const transportesDisponibles = transportes.filter(t => t.estado === 'DISPONIBLE')
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -196,7 +215,7 @@ const Prestamos = () => {
                   <option value="">Seleccionar estación origen</option>
                   {estaciones.map(estacion => (
                     <option key={estacion.id} value={estacion.id}>
-                      Estación #{estacion.id} - {estacion.ubicacion}
+                      {estacion.nombre} - {estacion.ubicacion}
                     </option>
                   ))}
                 </select>
@@ -216,7 +235,7 @@ const Prestamos = () => {
                   <option value="">Seleccionar estación destino</option>
                   {estaciones.map(estacion => (
                     <option key={estacion.id} value={estacion.id}>
-                      Estación #{estacion.id} - {estacion.ubicacion}
+                      {estacion.nombre} - {estacion.ubicacion}
                     </option>
                   ))}
                 </select>
