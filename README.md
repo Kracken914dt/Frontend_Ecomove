@@ -166,38 +166,3 @@ server: {
   // ... resto de configuración
 }
 ```
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## 📞 Soporte
-
-Para soporte técnico o preguntas sobre el proyecto:
-
-- Crear un issue en el repositorio
-- Contactar al equipo de desarrollo
-- Revisar la documentación del backend
-
-## 🔮 Roadmap
-
-### Funcionalidades Futuras
-- [ ] Sistema de notificaciones en tiempo real
-- [ ] Integración con mapas para ubicación de estaciones
-- [ ] Dashboard analítico avanzado
-- [ ] Sistema de reportes y exportación
-- [ ] Autenticación y autorización de usuarios
-- [ ] Modo offline para operaciones básicas
-- [ ] PWA (Progressive Web App)
-
----
-
-**EcoMove** - Haciendo el transporte ecológico accesible para todos 🌱

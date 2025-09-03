@@ -10,91 +10,192 @@ import {
   CreditCard, 
   Clock, 
   Menu,
-  X
+  X,
+  Home,
+  BarChart3,
+  Settings,
+  LogOut,
+  Bell,
+  User,
+  Sun,
+  Moon
 } from 'lucide-react'
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [darkMode, setDarkMode] = useState(false)
+  const [notifications, setNotifications] = useState(3)
   const location = useLocation()
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: Leaf },
-    { name: 'Usuarios', href: '/usuarios', icon: Users },
-    { name: 'Estaciones', href: '/estaciones', icon: MapPin },
-    { name: 'Transportes', href: '/transportes', icon: Truck },
-    { name: 'Préstamos', href: '/prestamos', icon: Clock },
-    { name: 'Historial', href: '/historial', icon: Clock },
-    { name: 'Pagos', href: '/pagos', icon: CreditCard },
+    { 
+      name: 'Dashboard', 
+      href: '/', 
+      icon: Home, 
+      description: 'Vista general del sistema'
+    },
+    { 
+      name: 'Usuarios', 
+      href: '/usuarios', 
+      icon: Users, 
+      description: 'Gestión de usuarios'
+    },
+    { 
+      name: 'Estaciones', 
+      href: '/estaciones', 
+      icon: MapPin, 
+      description: 'Administrar estaciones'
+    },
+    { 
+      name: 'Transportes', 
+      href: '/transportes', 
+      icon: Truck, 
+      description: 'Gestionar transportes'
+    },
+    { 
+      name: 'Préstamos', 
+      href: '/prestamos', 
+      icon: Clock, 
+      description: 'Nuevos préstamos'
+    },
+    { 
+      name: 'Historial', 
+      href: '/historial', 
+      icon: BarChart3, 
+      description: 'Historial de préstamos'
+    },
+    { 
+      name: 'Pagos', 
+      href: '/pagos', 
+      icon: CreditCard, 
+      description: 'Gestión de pagos'
+    },
   ]
 
   const isActive = (path) => location.pathname === path
 
   return (
-    <div className="min-h-screen bg-eco-gray-50">
-      {/* Header */}
-      <header className="bg-eco-gray-800 text-white shadow-lg">
+    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-eco-gray-50'}`}>
+      {/* Header mejorado */}
+      <header className={`${darkMode ? 'bg-gray-800' : 'bg-eco-gray-800'} text-white shadow-lg border-b border-eco-green-500`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-md text-eco-gray-400 hover:text-white hover:bg-eco-gray-700"
+                className="lg:hidden p-2 rounded-md text-eco-gray-400 hover:text-white hover:bg-eco-gray-700 transition-all duration-200"
               >
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <div className="flex items-center ml-4 lg:ml-0">
-                <Leaf className="h-8 w-8 text-eco-green-400" />
-                <span className="ml-2 text-xl font-bold">EcoMove</span>
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-eco-green-400 to-eco-green-600 flex items-center justify-center animate-fade-in">
+                  <Leaf className="h-6 w-6 text-white" />
+                </div>
+                <span className="ml-3 text-xl font-bold bg-gradient-to-r from-eco-green-400 to-white bg-clip-text text-transparent">
+                  EcoMove
+                </span>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-eco-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="pl-10 pr-4 py-2 bg-eco-gray-700 border border-eco-gray-600 rounded-lg text-white placeholder-eco-gray-400 focus:outline-none focus:ring-2 focus:ring-eco-green-500"
-                />
-              </div>
-              <button className="btn-primary flex items-center space-x-2">
-                <Plus size={20} />
-                <span>Nueva estación</span>
+              {/* Notificaciones */}
+              <button className="relative p-2 text-eco-gray-400 hover:text-white hover:bg-eco-gray-700 rounded-lg transition-all duration-300 hover:scale-105">
+                <Bell size={20} />
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce">
+                    {notifications}
+                  </span>
+                )}
               </button>
+
+              {/* Toggle modo oscuro */}
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 text-eco-gray-400 hover:text-white hover:bg-eco-gray-700 rounded-lg transition-all duration-300 hover:scale-105 hover:rotate-12"
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+
+              {/* Perfil de usuario */}
+              <div className="flex items-center space-x-2 group">
+                <div className="h-8 w-8 rounded-full bg-eco-green-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-eco-green-400">
+                  <User size={16} className="text-white" />
+                </div>
+                <span className="hidden sm:inline text-sm font-medium transition-all duration-300 group-hover:text-eco-green-300">Admin</span>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-eco-green-100 transform transition-transform duration-300 ease-in-out lg:transition-none`}>
-          <nav className="mt-8 px-4">
-            <ul className="space-y-2">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                return (
-                  <li key={item.name}>
-                    <Link
-                      to={item.href}
-                      className={`flex items-center px-4 py-3 text-eco-gray-700 rounded-lg transition-colors duration-200 ${
-                        isActive(item.href)
-                          ? 'bg-eco-green-200 text-eco-green-800 font-medium'
-                          : 'hover:bg-eco-green-200 hover:text-eco-green-800'
-                      }`}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <Icon size={20} className="mr-3" />
-                      {item.name}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
+        {/* Sidebar mejorado */}
+        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-eco-green-50 to-eco-green-100 border-r border-eco-green-200 transform transition-all duration-500 ease-in-out lg:transition-none shadow-xl lg:shadow-none animate-slide-down`}>
+          <div className="flex flex-col h-full">
+            {/* Logo del sidebar */}
+            <div className="p-6 border-b border-eco-green-200">
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-eco-green-500 to-eco-green-600 flex items-center justify-center">
+                  <Leaf className="h-5 w-5 text-white" />
+                </div>
+                <span className="ml-3 text-lg font-bold text-eco-gray-800">Navegación</span>
+              </div>
+            </div>
+
+            {/* Navegación principal */}
+            <nav className="flex-1 px-4 py-6">
+              <ul className="space-y-2">
+                {navigation.map((item) => {
+                  const Icon = item.icon
+                  const isActiveRoute = isActive(item.href)
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        to={item.href}
+                        className={`group flex items-center px-4 py-3 text-eco-gray-700 rounded-xl transition-all duration-300 hover:scale-105 ${
+                          isActiveRoute
+                            ? 'bg-gradient-to-r from-eco-green-500 to-eco-green-600 text-white shadow-lg transform scale-105 animate-bounce-in'
+                            : 'hover:bg-eco-green-200 hover:text-eco-green-800 hover:shadow-md'
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <div className={`p-2 rounded-lg ${isActiveRoute ? 'bg-white bg-opacity-20' : 'bg-eco-green-100 group-hover:bg-eco-green-200'}`}>
+                          <Icon size={20} className={isActiveRoute ? 'text-white' : 'text-eco-green-600'} />
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className={`font-medium ${isActiveRoute ? 'text-white' : 'text-eco-gray-800'}`}>
+                              {item.name}
+                            </span>
+                          </div>
+                          <p className={`text-sm ${isActiveRoute ? 'text-eco-green-100' : 'text-eco-gray-500'}`}>
+                            {item.description}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+
+            {/* Footer del sidebar */}
+            <div className="p-4 border-t border-eco-green-200">
+              <div className="space-y-2">
+                <button className="w-full flex items-center px-4 py-3 text-eco-gray-600 hover:text-eco-gray-800 hover:bg-eco-green-200 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-md">
+                  <Settings size={18} className="mr-3 transition-transform duration-300 group-hover:rotate-45" />
+                  <span className="font-medium">Configuración</span>
+                </button>
+                <button className="w-full flex items-center px-4 py-3 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-md">
+                  <LogOut size={18} className="mr-3 transition-transform duration-300 group-hover:-translate-x-1" />
+                  <span className="font-medium">Cerrar Sesión</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </aside>
 
-        {/* Main content */}
+        {/* Contenido principal */}
         <main className="flex-1 lg:ml-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Outlet />
@@ -102,7 +203,7 @@ const Layout = () => {
         </main>
       </div>
 
-      {/* Overlay for mobile */}
+      {/* Overlay para móvil */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
