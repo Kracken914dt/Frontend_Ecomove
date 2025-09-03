@@ -15,16 +15,11 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Bell,
-  User,
-  Sun,
-  Moon
+  User
 } from 'lucide-react'
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
-  const [notifications, setNotifications] = useState(3)
   const location = useLocation()
 
   const navigation = [
@@ -75,9 +70,9 @@ const Layout = () => {
   const isActive = (path) => location.pathname === path
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-eco-gray-50'}`}>
+    <div className="min-h-screen bg-eco-gray-50">
       {/* Header mejorado */}
-      <header className={`${darkMode ? 'bg-gray-800' : 'bg-eco-gray-800'} text-white shadow-lg border-b border-eco-green-500`}>
+      <header className="bg-eco-gray-800 text-white shadow-lg border-b border-eco-green-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -98,24 +93,6 @@ const Layout = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Notificaciones */}
-              <button className="relative p-2 text-eco-gray-400 hover:text-white hover:bg-eco-gray-700 rounded-lg transition-all duration-300 hover:scale-105">
-                <Bell size={20} />
-                {notifications > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce">
-                    {notifications}
-                  </span>
-                )}
-              </button>
-
-              {/* Toggle modo oscuro */}
-              <button 
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 text-eco-gray-400 hover:text-white hover:bg-eco-gray-700 rounded-lg transition-all duration-300 hover:scale-105 hover:rotate-12"
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-
               {/* Perfil de usuario */}
               <div className="flex items-center space-x-2 group">
                 <div className="h-8 w-8 rounded-full bg-eco-green-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-eco-green-400">
