@@ -43,7 +43,7 @@ export const transportesAPI = {
 export const prestamosAPI = {
   crear: (prestamo) => api.post('/prestamos', prestamo),
   finalizar: (id, datos) => api.put(`/prestamos/${id}/finalizar`, datos),
-  historialPorUsuario: (usuarioId) => api.get(`/prestamos/usuario/${usuarioId}`),
+  historialPorUsuario: (usuarioId) => api.get(`/prestamos/usuario/${usuarioId}`)
 }
 
 // Pagos

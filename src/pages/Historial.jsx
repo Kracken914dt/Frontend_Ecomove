@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, Search, Filter, Calendar, User, MapPin, Truck, DollarSign, Eye } from 'lucide-react'
-import { prestamosAPI, usuariosAPI } from '../services/api'
+import { prestamosAPI, usuariosAPI, transportesAPI, estacionesAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const Historial = () => {
@@ -18,14 +18,63 @@ const Historial = () => {
 const cargarDatos = async () => {
   try {
     setLoading(true)
-    const [usuariosRes] = await Promise.all([
-      usuariosAPI.listar()
+    
+    // Primero obtenemos toda la información necesaria
+    const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
+      usuariosAPI.listar(),
+      transportesAPI.listar(),
+      estacionesAPI.listar()
     ])
-    // Filtrar solo usuarios que tengan datos completos (no borrados)
+
+    // Filtramos usuarios activos
     const usuariosActivos = usuariosRes.data.filter(
       usuario => usuario.nombre && usuario.correo && usuario.documento
     )
     setUsuarios(usuariosActivos)
+
+    // Guardamos todas las entidades en mapas para búsqueda rápida
+    const transportesMap = transportesRes.data.reduce((map, t) => {
+      map[t.id] = t
+      return map
+    }, {})
+
+    const estacionesMap = estacionesRes.data.reduce((map, e) => {
+      map[e.id] = e
+      return map
+    }, {})
+
+    const usuariosMap = usuariosActivos.reduce((map, u) => {
+      map[u.id] = u
+      return map
+    }, {})
+
+    // Obtenemos los préstamos por cada usuario activo
+    const prestamosPromesas = usuariosActivos.map(usuario =>
+      prestamosAPI.historialPorUsuario(usuario.id)
+        .then(response => {
+          // Por cada préstamo, agregamos la información relacionada
+          return response.data.map(prestamo => ({
+            ...prestamo,
+            usuario: usuariosMap[prestamo.usuarioId] || { nombre: 'Usuario no encontrado' },
+            transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
+            estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
+            estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
+          }))
+        })
+        .catch(error => {
+          console.error(`Error obteniendo préstamos del usuario ${usuario.id}:`, error)
+          return []
+        })
+    )
+
+    // Esperamos todas las promesas de préstamos
+    const prestamosPorUsuario = await Promise.all(prestamosPromesas)
+    
+    // Aplanamos el array de arrays de préstamos
+    const todosLosPrestamos = prestamosPorUsuario.flat()
+    
+    setPrestamos(todosLosPrestamos)
+    
   } catch (error) {
     toast.error('Error al cargar datos')
     console.error('Error cargando datos:', error)
@@ -266,7 +315,7 @@ const cargarDatos = async () => {
                             #{prestamo.id}
                           </div>
                           <div className="text-sm text-eco-gray-500">
-                            {prestamo.fechaCreacion ? new Date(prestamo.fechaCreacion).toLocaleDateString() : 'Sin fecha'}
+                            {prestamo.inicio ? new Date(prestamo.inicio).toLocaleDateString() : 'Sin fecha'} - {prestamo.fin ? new Date(prestamo.fin).toLocaleDateString() : 'Sin fecha'}
                           </div>
                         </div>
                       </div>
@@ -291,7 +340,9 @@ const cargarDatos = async () => {
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 text-eco-gray-400 mr-1" />
                         <span>
-                          {prestamo.estacionOrigen?.nombre || 'Origen'} → {prestamo.estacionDestino?.nombre || 'Destino'}
+                          Estación {prestamo.estacionOrigen?.ubicacion || 'No disponible'} 
+                          <span className="mx-2">→</span> 
+                          Estación {prestamo.estacionDestino?.ubicacion || 'No disponible'}
                         </span>
                       </div>
                     </td>
