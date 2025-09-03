@@ -100,7 +100,6 @@ const Transportes = () => {
   }
 
   const filteredTransportes = transportes.filter(transporte =>
-    transporte.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transporte.tipo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transporte.estado?.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -151,21 +150,6 @@ const Transportes = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Código del transporte
-                </label>
-                <input
-                  type="text"
-                  {...register('codigo', { required: 'El código es requerido' })}
-                  className="input-field"
-                  placeholder="Ej: BIC-001"
-                />
-                {errors.codigo && (
-                  <p className="text-red-500 text-sm mt-1">{errors.codigo.message}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
                   Tipo de transporte
                 </label>
                 <select
@@ -174,7 +158,6 @@ const Transportes = () => {
                 >
                   <option value="">Seleccionar tipo</option>
                   <option value="BICICLETA">Bicicleta</option>
-                  <option value="PATINETA">Patineta</option>
                   <option value="SCOOTER">Scooter</option>
                 </select>
                 {errors.tipo && (
@@ -194,43 +177,10 @@ const Transportes = () => {
                   <option value="DISPONIBLE">Disponible</option>
                   <option value="EN_USO">En uso</option>
                   <option value="MANTENIMIENTO">Mantenimiento</option>
-                  <option value="FUERA_DE_SERVICIO">Fuera de servicio</option>
                 </select>
                 {errors.estado && (
                   <p className="text-red-500 text-sm mt-1">{errors.estado.message}</p>
                 )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Estación asignada
-                </label>
-                <select
-                  {...register('estacionId', { required: 'La estación es requerida' })}
-                  className="input-field"
-                >
-                  <option value="">Seleccionar estación</option>
-                  {estaciones.map(estacion => (
-                    <option key={estacion.id} value={estacion.id}>
-                      {estacion.nombre}
-                    </option>
-                  ))}
-                </select>
-                {errors.estacionId && (
-                  <p className="text-red-500 text-sm mt-1">{errors.estacionId.message}</p>
-                )}
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  {...register('descripcion')}
-                  className="input-field"
-                  rows="3"
-                  placeholder="Descripción opcional del transporte"
-                />
               </div>
             </div>
             
@@ -259,7 +209,7 @@ const Transportes = () => {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-eco-gray-400" size={20} />
         <input
           type="text"
-          placeholder="Buscar transportes por código, tipo o estado..."
+          placeholder="Buscar transportes por tipo o estado..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 pr-4 py-2 w-full border border-eco-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent"
@@ -297,7 +247,7 @@ const Transportes = () => {
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Estación
+                    Información
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
                     Acciones
@@ -314,7 +264,7 @@ const Transportes = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-eco-gray-900">
-                            {transporte.codigo || 'Sin código'}
+                            Transporte #{transporte.id}
                           </div>
                           <div className="text-sm text-eco-gray-500">
                             ID: {transporte.id}
@@ -336,7 +286,7 @@ const Transportes = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
-                      {estaciones.find(e => e.id === transporte.estacionId)?.nombre || 'Sin estación'}
+                      Sin estación asignada
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

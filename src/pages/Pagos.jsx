@@ -8,8 +8,7 @@ const Pagos = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [dateFilter, setDateFilter] = useState('30')
+
 
   useEffect(() => {
     console.log('Pagos component mounted, calling cargarPagos...')
@@ -47,35 +46,7 @@ const Pagos = () => {
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'COMPLETADO':
-        return 'bg-eco-green-100 text-eco-green-800'
-      case 'PENDIENTE':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'FALLIDO':
-        return 'bg-red-100 text-red-800'
-      case 'CANCELADO':
-        return 'bg-eco-gray-100 text-eco-gray-800'
-      default:
-        return 'bg-eco-gray-100 text-eco-gray-800'
-    }
-  }
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'COMPLETADO':
-        return 'Completado'
-      case 'PENDIENTE':
-        return 'Pendiente'
-      case 'FALLIDO':
-        return 'Fallido'
-      case 'CANCELADO':
-        return 'Cancelado'
-      default:
-        return status || 'Sin estado'
-    }
-  }
 
   const getMetodoPagoIcon = (metodo) => {
     switch (metodo) {
@@ -91,12 +62,9 @@ const Pagos = () => {
   }
 
   const filteredPagos = pagos.filter(pago => {
-    const matchesSearch = pago.id?.toString().includes(searchTerm) ||
-                         pago.prestamoId?.toString().includes(searchTerm)
+    const matchesSearch = pago.id?.toString().includes(searchTerm)
     
-    const matchesStatus = !statusFilter || pago.estado === statusFilter
-    
-    return matchesSearch && matchesStatus
+    return matchesSearch
   })
 
   const getDateFilterText = (days) => {
@@ -139,43 +107,7 @@ const Pagos = () => {
       <div className="card">
         <h2 className="text-lg font-semibold text-eco-gray-900 mb-4">Filtros de Búsqueda</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Filtro por estado */}
-          <div>
-            <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-              Estado del pago
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="input-field"
-            >
-              <option value="">Todos los estados</option>
-              <option value="COMPLETADO">Completado</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="FALLIDO">Fallido</option>
-              <option value="CANCELADO">Cancelado</option>
-            </select>
-          </div>
-
-          {/* Filtro por fecha */}
-          <div>
-            <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-              Período de tiempo
-            </label>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="input-field"
-            >
-              <option value="7">Últimos 7 días</option>
-              <option value="30">Últimos 30 días</option>
-              <option value="90">Últimos 90 días</option>
-              <option value="365">Último año</option>
-              <option value="all">Todos los días</option>
-            </select>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           {/* Búsqueda por ID */}
           <div>
             <label className="block text-sm font-medium text-eco-gray-700 mb-2">
@@ -185,7 +117,7 @@ const Pagos = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-eco-gray-400" size={20} />
               <input
                 type="text"
-                placeholder="Buscar por ID de pago o préstamo..."
+                placeholder="Buscar por ID de pago..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border border-eco-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent"
@@ -194,13 +126,7 @@ const Pagos = () => {
           </div>
         </div>
 
-        {/* Tag de filtro activo */}
-        <div className="mt-4">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-eco-green-100 text-eco-green-800">
-            <Calendar className="h-4 w-4 mr-2" />
-            {getDateFilterText(dateFilter)}
-          </span>
-        </div>
+
       </div>
 
       {/* Estadísticas de pagos */}
@@ -228,9 +154,9 @@ const Pagos = () => {
         
         <div className="card text-center">
           <div className="text-2xl font-bold text-yellow-600">
-            {pagos.filter(p => p.estado === 'PENDIENTE').length}
+            {pagos.length > 0 ? pagos.length : 0}
           </div>
-          <div className="text-sm text-eco-gray-600">Pagos pendientes</div>
+          <div className="text-sm text-eco-gray-600">Total registros</div>
         </div>
       </div>
 
@@ -239,35 +165,7 @@ const Pagos = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-eco-gray-900">Lista de Pagos</h2>
           <div className="flex space-x-2">
-            <button 
-              onClick={() => {
-                const pagosEjemplo = [
-                  {
-                    id: 1,
-                    prestamoId: 101,
-                    usuario: { nombre: 'Juan Pérez' },
-                    monto: 15.50,
-                    metodoPago: 'EFECTIVO',
-                    estado: 'COMPLETADO',
-                    fechaPago: new Date().toISOString()
-                  },
-                  {
-                    id: 2,
-                    prestamoId: 102,
-                    usuario: { nombre: 'María García' },
-                    monto: 22.00,
-                    metodoPago: 'TARJETA',
-                    estado: 'COMPLETADO',
-                    fechaPago: new Date().toISOString()
-                  }
-                ]
-                setPagos(pagosEjemplo)
-                toast.success('Pagos de ejemplo cargados')
-              }}
-              className="btn-primary"
-            >
-              Cargar Ejemplos
-            </button>
+
             <button className="btn-secondary flex items-center space-x-2">
               <Download size={16} />
               <span>Exportar</span>
@@ -298,7 +196,7 @@ const Pagos = () => {
           <div className="text-center py-8">
             <CreditCard className="mx-auto h-12 w-12 text-eco-gray-400" />
             <p className="mt-2 text-eco-gray-600">
-              {searchTerm || statusFilter ? 'No se encontraron pagos que coincidan con los filtros' : 'No hay pagos registrados'}
+              {searchTerm ? 'No se encontraron pagos que coincidan con la búsqueda' : 'No hay pagos registrados'}
             </p>
           </div>
         ) : (
@@ -310,19 +208,10 @@ const Pagos = () => {
                     Pago
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Préstamo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Usuario
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
                     Monto
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
                     Método
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
                     Fecha
@@ -350,22 +239,6 @@ const Pagos = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-eco-gray-400 mr-2" />
-                        <span className="text-sm text-eco-gray-900">
-                          #{pago.prestamoId || 'Sin préstamo'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 text-eco-gray-400 mr-2" />
-                        <span className="text-sm text-eco-gray-900">
-                          {pago.usuario?.nombre || 'Usuario no encontrado'}
-                        </span>
-                      </div>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
                       <div className="flex items-center">
                         <DollarSign className="h-4 w-4 text-eco-gray-400 mr-1" />
@@ -376,22 +249,17 @@ const Pagos = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {getMetodoPagoIcon(pago.metodoPago)}
+                        {getMetodoPagoIcon(pago.metodo)}
                         <span className="ml-2 text-sm text-eco-gray-900">
-                          {pago.metodoPago || 'Efectivo'}
+                          {pago.metodo || 'Efectivo'}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pago.estado)}`}>
-                        {getStatusText(pago.estado)}
-                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 text-eco-gray-400 mr-2" />
                         <span>
-                          {pago.fechaPago ? new Date(pago.fechaPago).toLocaleDateString() : 'Sin fecha'}
+                          {pago.fecha ? new Date(pago.fecha).toLocaleDateString() : 'Sin fecha'}
                         </span>
                       </div>
                     </td>

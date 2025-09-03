@@ -16,8 +16,7 @@ const Prestamos = () => {
   const [selectedUser, setSelectedUser] = useState(null)
   const [selectedTransport, setSelectedTransport] = useState(null)
 
-  const { register, handleSubmit, reset, formState: { errors }, watch } = useForm()
-  const watchTiempoEstimado = watch('tiempoEstimado')
+  const { register, handleSubmit, reset, formState: { errors } } = useForm()
 
   useEffect(() => {
     cargarDatos()
@@ -85,18 +84,7 @@ const Prestamos = () => {
     }
   }
 
-  const calcularCosto = (tiempo, tipoTransporte) => {
-    // Tarifas por minuto (ejemplo)
-    const tarifas = {
-      'BICICLETA': 0.05, // $0.05 por minuto
-      'PATINETA': 0.08,  // $0.08 por minuto
-      'SCOOTER': 0.12    // $0.12 por minuto
-    }
-    
-    const tarifa = tarifas[tipoTransporte] || 0.05
-    const minutos = parseInt(tiempo) || 0
-    return (tarifa * minutos).toFixed(2)
-  }
+
 
   const filteredPrestamos = prestamos.filter(prestamo =>
     prestamo.id?.toString().includes(searchTerm) ||
@@ -188,7 +176,7 @@ const Prestamos = () => {
                   <option value="">Seleccionar transporte</option>
                   {transportesDisponibles.map(transporte => (
                     <option key={transporte.id} value={transporte.id}>
-                      {transporte.codigo} - {transporte.tipo}
+                      Transporte #{transporte.id} - {transporte.tipo}
                     </option>
                   ))}
                 </select>
@@ -208,7 +196,7 @@ const Prestamos = () => {
                   <option value="">Seleccionar estación origen</option>
                   {estaciones.map(estacion => (
                     <option key={estacion.id} value={estacion.id}>
-                      {estacion.nombre}
+                      Estación #{estacion.id} - {estacion.ubicacion}
                     </option>
                   ))}
                 </select>
@@ -228,7 +216,7 @@ const Prestamos = () => {
                   <option value="">Seleccionar estación destino</option>
                   {estaciones.map(estacion => (
                     <option key={estacion.id} value={estacion.id}>
-                      {estacion.nombre}
+                      Estación #{estacion.id} - {estacion.ubicacion}
                     </option>
                   ))}
                 </select>
@@ -239,45 +227,62 @@ const Prestamos = () => {
               
               <div>
                 <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Tiempo estimado (minutos)
+                  Fecha y hora de inicio
                 </label>
                 <input
-                  type="number"
-                  {...register('tiempoEstimado', { 
-                    required: 'El tiempo estimado es requerido',
-                    min: { value: 1, message: 'El tiempo debe ser mayor a 0' }
-                  })}
+                  type="datetime-local"
+                  {...register('inicio', { required: 'La fecha de inicio es requerida' })}
                   className="input-field"
-                  placeholder="30"
                 />
-                {errors.tiempoEstimado && (
-                  <p className="text-red-500 text-sm mt-1">{errors.tiempoEstimado.message}</p>
+                {errors.inicio && (
+                  <p className="text-red-500 text-sm mt-1">{errors.inicio.message}</p>
                 )}
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Costo estimado
+                  Fecha y hora de finalización
                 </label>
-                <div className="input-field bg-eco-gray-50">
-                  ${selectedTransport && watchTiempoEstimado ? 
-                    calcularCosto(watchTiempoEstimado, selectedTransport.tipo) : 
-                    '0.00'
-                  }
-                </div>
+                <input
+                  type="datetime-local"
+                  {...register('fin', { required: 'La fecha de finalización es requerida' })}
+                  className="input-field"
+                />
+                {errors.fin && (
+                  <p className="text-red-500 text-sm mt-1">{errors.fin.message}</p>
+                )}
               </div>
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                Notas (opcional)
-              </label>
-              <textarea
-                {...register('notas')}
-                className="input-field"
-                rows="3"
-                placeholder="Detalles adicionales del préstamo"
-              />
+              
+              <div>
+                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
+                  Costo total
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('costo', { 
+                    required: 'El costo es requerido',
+                    min: { value: 0, message: 'El costo debe ser mayor o igual a 0' }
+                  })}
+                  className="input-field"
+                  placeholder="0.00"
+                />
+                {errors.costo && (
+                  <p className="text-red-500 text-sm mt-1">{errors.costo.message}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
+                  ID del pago asociado
+                </label>
+                <input
+                  type="number"
+                  {...register('pagoId')}
+                  className="input-field"
+                  placeholder="Opcional"
+                />
+              </div>
             </div>
             
             <div className="flex justify-end space-x-3">
@@ -366,7 +371,7 @@ const Prestamos = () => {
                             #{prestamo.id}
                           </div>
                           <div className="text-sm text-eco-gray-500">
-                            {prestamo.fechaCreacion ? new Date(prestamo.fechaCreacion).toLocaleDateString() : 'Sin fecha'}
+                            {prestamo.inicio ? new Date(prestamo.inicio).toLocaleDateString() : 'Sin fecha'}
                           </div>
                         </div>
                       </div>
@@ -375,7 +380,7 @@ const Prestamos = () => {
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-eco-gray-400 mr-2" />
                         <span className="text-sm text-eco-gray-900">
-                          {prestamo.usuario?.nombre || 'Usuario no encontrado'}
+                          Usuario #{prestamo.usuarioId || 'No encontrado'}
                         </span>
                       </div>
                     </td>
@@ -383,7 +388,7 @@ const Prestamos = () => {
                       <div className="flex items-center">
                         <Truck className="h-4 w-4 text-eco-gray-400 mr-2" />
                         <span className="text-sm text-eco-gray-900">
-                          {prestamo.transporte?.codigo || 'Transporte no encontrado'}
+                          Transporte #{prestamo.transporteId || 'No encontrado'}
                         </span>
                       </div>
                     </td>
@@ -391,7 +396,7 @@ const Prestamos = () => {
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 text-eco-gray-400 mr-1" />
                         <span>
-                          {prestamo.estacionOrigen?.nombre || 'Origen'} → {prestamo.estacionDestino?.nombre || 'Destino'}
+                          Estación #{prestamo.estacionOrigenId || 'Origen'} → Estación #{prestamo.estacionDestinoId || 'Destino'}
                         </span>
                       </div>
                     </td>

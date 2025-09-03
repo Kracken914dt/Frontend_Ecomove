@@ -69,7 +69,6 @@ const Estaciones = () => {
   }
 
   const filteredEstaciones = estaciones.filter(estacion =>
-    estacion.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     estacion.ubicacion?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -122,21 +121,6 @@ const Estaciones = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-eco-gray-700 mb-3">
-                    🏷️ Nombre de la estación *
-                  </label>
-                  <input
-                    type="text"
-                    {...register('nombre', { required: 'El nombre es requerido' })}
-                    className="w-full px-4 py-3 border border-eco-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Ej: Estación Central EcoMove"
-                  />
-                  {errors.nombre && (
-                    <p className="text-red-500 text-sm mt-2">{errors.nombre.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-eco-gray-700 mb-3">
                     📍 Ubicación *
                   </label>
                   <input
@@ -166,18 +150,6 @@ const Estaciones = () => {
                   {errors.capacidad && (
                     <p className="text-red-500 text-sm mt-2">{errors.capacidad.message}</p>
                   )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-eco-gray-700 mb-3">
-                    📝 Descripción
-                  </label>
-                  <textarea
-                    {...register('descripcion')}
-                    className="w-full px-4 py-3 border border-eco-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent transition-all duration-200"
-                    rows="3"
-                    placeholder="Descripción opcional de la estación..."
-                  />
                 </div>
               </div>
               
@@ -210,7 +182,7 @@ const Estaciones = () => {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-eco-gray-400 transition-all duration-300 group-hover:scale-110" size={20} />
         <input
           type="text"
-          placeholder="🔍 Buscar estaciones por nombre o ubicación..."
+          placeholder="🔍 Buscar estaciones por ubicación..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 pr-4 py-3 w-full border border-eco-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent transition-all duration-300 hover:shadow-md focus:shadow-lg"
@@ -278,7 +250,7 @@ const Estaciones = () => {
                       </div>
                       <div className="ml-4">
                         <h3 className="text-xl font-bold text-eco-gray-900">
-                          {estacion.nombre || 'Sin nombre'}
+                          {estacion.ubicacion || 'Sin ubicación'}
                         </h3>
                         <p className="text-sm text-eco-gray-500">
                           ID: {estacion.id}
@@ -322,10 +294,12 @@ const Estaciones = () => {
                       </div>
                     </div>
                     
-                    {estacion.descripcion && (
-                      <p className="text-sm text-eco-gray-600 mt-3 p-3 bg-eco-gray-50 rounded-lg">
-                        {estacion.descripcion}
-                      </p>
+                    {estacion.transportes && estacion.transportes.length > 0 && (
+                      <div className="mt-3 p-3 bg-eco-gray-50 rounded-lg">
+                        <p className="text-sm text-eco-gray-600">
+                          <strong>Transportes:</strong> {estacion.transportes.length} disponibles
+                        </p>
+                      </div>
                     )}
                   </div>
                   

@@ -117,7 +117,7 @@ const Usuarios = () => {
           </div>
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-eco-gray-700 mb-2">
                   Nombre completo
@@ -166,27 +166,6 @@ const Usuarios = () => {
                 />
                 {errors.documento && (
                   <p className="text-red-500 text-sm mt-1">{errors.documento.message}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  {...register('contrasena', { 
-                    required: !editingUser ? 'La contraseña es requerida' : false,
-                    minLength: {
-                      value: 6,
-                      message: 'La contraseña debe tener al menos 6 caracteres'
-                    }
-                  })}
-                  className="input-field"
-                  placeholder={editingUser ? 'Dejar en blanco para no cambiar' : 'Ingrese contraseña'}
-                />
-                {errors.contrasena && (
-                  <p className="text-red-500 text-sm mt-1">{errors.contrasena.message}</p>
                 )}
               </div>
             </div>
