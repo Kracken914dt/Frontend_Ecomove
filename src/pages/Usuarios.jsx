@@ -17,11 +17,15 @@ const Usuarios = () => {
     cargarUsuarios()
   }, [])
 
-  const cargarUsuarios = async () => {
+   const cargarUsuarios = async () => {
     try {
       setLoading(true)
       const response = await usuariosAPI.listar()
-      setUsuarios(response.data)
+      // Filtramos usuarios activos (no eliminados)
+      const usuariosActivos = response.data.filter(
+        usuario => !usuario.eliminado && usuario.estado !== 'INACTIVO'
+      )
+      setUsuarios(usuariosActivos)
     } catch (error) {
       toast.error('Error al cargar usuarios')
       console.error('Error cargando usuarios:', error)
@@ -30,10 +34,16 @@ const Usuarios = () => {
     }
   }
 
+  // ...existing code...
+
   const onSubmit = async (data) => {
     try {
       if (editingUser) {
-        // TODO: Implementar actualización cuando el backend lo soporte
+        // Simulamos actualización creando un nuevo registro con el mismo ID
+        await usuariosAPI.crear({
+          ...data,
+          id: editingUser.id
+        })
         toast.success('Usuario actualizado correctamente')
       } else {
         await usuariosAPI.crear(data)
@@ -49,16 +59,28 @@ const Usuarios = () => {
     }
   }
 
-  const handleEdit = (usuario) => {
-    setEditingUser(usuario)
-    reset(usuario)
-    setShowForm(true)
+  const handleEdit = async (usuario) => {
+    try {
+      const response = await usuariosAPI.obtenerPorId(usuario.id)
+      const usuarioCompleto = response.data
+      setEditingUser(usuarioCompleto)
+      reset(usuarioCompleto)
+      setShowForm(true)
+    } catch (error) {
+      toast.error('Error al cargar datos del usuario')
+      console.error('Error cargando usuario:', error)
+    }
   }
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
       try {
-        // TODO: Implementar eliminación cuando el backend lo soporte
+        // Simulamos eliminación creando un nuevo registro con estado inactivo
+        await usuariosAPI.crear({
+          id: id,
+          estado: 'INACTIVO',
+          eliminado: true
+        })
         toast.success('Usuario eliminado correctamente')
         cargarUsuarios()
       } catch (error) {

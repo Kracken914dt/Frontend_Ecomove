@@ -21,7 +21,11 @@ const Estaciones = () => {
     try {
       setLoading(true)
       const response = await estacionesAPI.listar()
-      setEstaciones(response.data)
+      // Filtramos estaciones activas
+      const estacionesActivas = response.data.filter(
+        estacion => !estacion.eliminado && estacion.estado !== 'INACTIVO'
+      )
+      setEstaciones(estacionesActivas)
     } catch (error) {
       toast.error('Error al cargar estaciones')
       console.error('Error cargando estaciones:', error)
@@ -33,7 +37,11 @@ const Estaciones = () => {
   const onSubmit = async (data) => {
     try {
       if (editingStation) {
-        // TODO: Implementar actualización cuando el backend lo soporte
+        // Simulamos actualización creando un nuevo registro con el mismo ID
+        await estacionesAPI.crear({
+          ...data,
+          id: editingStation.id
+        })
         toast.success('Estación actualizada correctamente')
       } else {
         await estacionesAPI.crear(data)
@@ -49,16 +57,28 @@ const Estaciones = () => {
     }
   }
 
-  const handleEdit = (estacion) => {
-    setEditingStation(estacion)
-    reset(estacion)
-    setShowForm(true)
+  const handleEdit = async (estacion) => {
+    try {
+      const response = await estacionesAPI.obtenerPorId(estacion.id)
+      const estacionCompleta = response.data
+      setEditingStation(estacionCompleta)
+      reset(estacionCompleta)
+      setShowForm(true)
+    } catch (error) {
+      toast.error('Error al cargar datos de la estación')
+      console.error('Error cargando estación:', error)
+    }
   }
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta estación?')) {
       try {
-        // TODO: Implementar eliminación cuando el backend lo soporte
+        // Simulamos eliminación creando un nuevo registro con estado inactivo
+        await estacionesAPI.crear({
+          id: id,
+          estado: 'INACTIVO',
+          eliminado: true
+        })
         toast.success('Estación eliminada correctamente')
         cargarEstaciones()
       } catch (error) {

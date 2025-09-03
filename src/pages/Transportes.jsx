@@ -25,7 +25,11 @@ const Transportes = () => {
         transportesAPI.listar(),
         estacionesAPI.listar()
       ])
-      setTransportes(transportesRes.data)
+      // Filtramos transportes activos
+      const transportesActivos = transportesRes.data.filter(
+        transporte => !transporte.eliminado && transporte.estado !== 'FUERA_DE_SERVICIO'
+      )
+      setTransportes(transportesActivos)
       setEstaciones(estacionesRes.data)
     } catch (error) {
       toast.error('Error al cargar datos')
@@ -38,7 +42,11 @@ const Transportes = () => {
   const onSubmit = async (data) => {
     try {
       if (editingTransport) {
-        // TODO: Implementar actualización cuando el backend lo soporte
+        // Simulamos actualización creando un nuevo registro con el mismo ID
+        await transportesAPI.crear({
+          ...data,
+          id: editingTransport.id
+        })
         toast.success('Transporte actualizado correctamente')
       } else {
         await transportesAPI.crear(data)
@@ -54,16 +62,28 @@ const Transportes = () => {
     }
   }
 
-  const handleEdit = (transporte) => {
-    setEditingTransport(transporte)
-    reset(transporte)
-    setShowForm(true)
+  const handleEdit = async (transporte) => {
+    try {
+      const response = await transportesAPI.obtenerPorId(transporte.id)
+      const transporteCompleto = response.data
+      setEditingTransport(transporteCompleto)
+      reset(transporteCompleto)
+      setShowForm(true)
+    } catch (error) {
+      toast.error('Error al cargar datos del transporte')
+      console.error('Error cargando transporte:', error)
+    }
   }
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este transporte?')) {
       try {
-        // TODO: Implementar eliminación cuando el backend lo soporte
+        // Simulamos eliminación creando un nuevo registro con estado inactivo
+        await transportesAPI.crear({
+          id: id,
+          estado: 'FUERA_DE_SERVICIO',
+          eliminado: true
+        })
         toast.success('Transporte eliminado correctamente')
         cargarDatos()
       } catch (error) {
