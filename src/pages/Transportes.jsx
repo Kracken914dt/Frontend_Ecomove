@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Truck, Plus, Edit, Trash2, Search, Bike, Zap, Settings } from 'lucide-react'
+import { Truck, Plus, Edit, Trash2, Search, Bike, Zap, MapPin } from 'lucide-react'
 import { transportesAPI, estacionesAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
@@ -18,19 +18,42 @@ const Transportes = () => {
     cargarDatos()
   }, [])
 
+  // Primero modificamos la función cargarDatos para obtener las estaciones y sus transportes
   const cargarDatos = async () => {
     try {
       setLoading(true)
+      // Obtener transportes y estaciones
       const [transportesRes, estacionesRes] = await Promise.all([
         transportesAPI.listar(),
         estacionesAPI.listar()
       ])
-      // Filtramos transportes activos
+
+      // Filtrar transportes activos
       const transportesActivos = transportesRes.data.filter(
         transporte => !transporte.eliminado && transporte.estado !== 'FUERA_DE_SERVICIO'
       )
-      setTransportes(transportesActivos)
-      setEstaciones(estacionesRes.data)
+
+      // Crear un mapa para buscar estaciones por el ID del transporte
+      const estacionPorTransporte = {}
+      estacionesRes.data.forEach(estacion => {
+        if (estacion.transportes && Array.isArray(estacion.transportes)) {
+          estacion.transportes.forEach(transporteId => {
+            estacionPorTransporte[transporteId] = {
+              ubicacion: estacion.ubicacion,
+              capacidad: estacion.capacidad,
+              id: estacion.id
+            }
+          })
+        }
+      })
+
+      // Agregar información de la estación a cada transporte
+      const transportesConEstacion = transportesActivos.map(transporte => ({
+        ...transporte,
+        estacion: estacionPorTransporte[transporte.id] || null
+      }))
+
+      setTransportes(transportesConEstacion)
     } catch (error) {
       toast.error('Error al cargar datos')
       console.error('Error cargando datos:', error)
@@ -121,7 +144,8 @@ const Transportes = () => {
 
   const filteredTransportes = transportes.filter(transporte =>
     transporte.tipo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transporte.estado?.toLowerCase().includes(searchTerm.toLowerCase())
+    transporte.estado?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    transporte.estacion?.ubicacion?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
@@ -306,7 +330,23 @@ const Transportes = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
-                      Sin estación asignada
+                      {transporte.estacion ? (
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-lg bg-eco-green-50 flex items-center justify-center mr-2">
+                            <MapPin className="h-4 w-4 text-eco-green-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              Estación: {transporte.estacion.ubicacion}
+                            </div>
+                            <div className="text-eco-gray-500 text-xs">
+                              Capacidad: {transporte.estacion.capacidad || 0}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-eco-gray-500 italic">Sin estación asignada</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
