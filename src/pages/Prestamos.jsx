@@ -157,7 +157,40 @@ const Prestamos = () => {
     }
   }
 
+  const finalizarPrestamo = async (prestamo) => {
+    try {
+      // 1. Obtener el transporte actual
+      const transporteRes = await transportesAPI.obtenerPorId(prestamo.transporteId)
+      const transporte = transporteRes.data
 
+      // 2. Actualizar el estado del transporte a DISPONIBLE
+      await transportesAPI.crear({
+        ...transporte,
+        estado: 'DISPONIBLE'
+      })
+
+      // 3. Obtener y actualizar la estación destino
+      const estacionDestino = estaciones.find(e => e.id === prestamo.estacionDestinoId)
+      if (estacionDestino) {
+        await estacionesAPI.crear({
+          ...estacionDestino,
+          capacidad: estacionDestino.capacidad + 1
+        })
+      }
+
+      // 4. Finalizar el préstamo
+      await prestamosAPI.finalizar(prestamo.id, {
+        estado: 'COMPLETADO',
+        fechaFin: new Date().toISOString()
+      })
+
+      toast.success('Préstamo finalizado correctamente')
+      cargarDatos() // Recargar datos para actualizar la vista
+    } catch (error) {
+      console.error('Error finalizando préstamo:', error)
+      toast.error('Error al finalizar el préstamo')
+    }
+  }
 
   const filteredPrestamos = prestamos.filter(prestamo =>
     prestamo.id?.toString().includes(searchTerm) ||
@@ -498,6 +531,12 @@ const Prestamos = () => {
                           className="text-red-600 hover:text-red-900 p-1"
                         >
                           <Trash2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => finalizarPrestamo(prestamo)}
+                          className="text-eco-blue-600 hover:text-eco-blue-900 p-1"
+                        >
+                          <Eye size={16} />
                         </button>
                       </div>
                     </td>
