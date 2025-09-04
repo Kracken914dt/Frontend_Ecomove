@@ -163,22 +163,46 @@ const Prestamos = () => {
       const transporteRes = await transportesAPI.obtenerPorId(prestamo.transporteId)
       const transporte = transporteRes.data
 
-      // 2. Actualizar el estado del transporte a DISPONIBLE
+      // 2. Obtener estación origen y destino actualizadas
+      const estacionOrigen = estaciones.find(e => e.id === prestamo.estacionOrigenId)
+      const estacionDestino = estaciones.find(e => e.id === prestamo.estacionDestinoId)
+
+      if (!estacionDestino) {
+        toast.error('Estación de destino no encontrada')
+        return
+      }
+
+      // 3. Actualizar el estado del transporte a DISPONIBLE
       await transportesAPI.crear({
         ...transporte,
         estado: 'DISPONIBLE'
       })
 
-      // 3. Obtener y actualizar la estación destino
-      const estacionDestino = estaciones.find(e => e.id === prestamo.estacionDestinoId)
-      if (estacionDestino) {
+      // 4. Quitar el transporte de la estación origen y agregarlo a la estación destino
+      const transportesOrigenActualizados = (estacionOrigen.transportes || [])
+        .filter(id => id !== prestamo.transporteId)
+      
+      const transportesDestinoActualizados = [
+        ...(estacionDestino.transportes || []),
+        prestamo.transporteId
+      ]
+
+      // 5. Actualizar estación origen
+      if (estacionOrigen) {
         await estacionesAPI.crear({
-          ...estacionDestino,
-          capacidad: estacionDestino.capacidad + 1
+          ...estacionOrigen,
+          transportes: transportesOrigenActualizados
         })
       }
 
-      // 4. Finalizar el préstamo
+      // 6. Actualizar estación destino con nueva capacidad y transporte
+      await estacionesAPI.crear({
+        ...estacionDestino,
+        capacidad: estacionDestino.capacidad + 1,
+        transportes: transportesDestinoActualizados
+      })
+
+      // 7. Finalizar el préstamo
       await prestamosAPI.finalizar(prestamo.id, {
         estado: 'COMPLETADO',
         fechaFin: new Date().toISOString()
