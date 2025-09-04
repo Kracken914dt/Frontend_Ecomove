@@ -163,7 +163,13 @@ const Prestamos = () => {
       const transporteRes = await transportesAPI.obtenerPorId(prestamo.transporteId)
       const transporte = transporteRes.data
 
-      // 2. Obtener estación origen y destino actualizadas
+      // 2. Verificar si el transporte ya está disponible
+      if (transporte.estado === 'DISPONIBLE') {
+        toast.error('Este préstamo ya ha sido finalizado')
+        return
+      }
+
+      // 3. Obtener estación origen y destino actualizadas
       const estacionOrigen = estaciones.find(e => e.id === prestamo.estacionOrigenId)
       const estacionDestino = estaciones.find(e => e.id === prestamo.estacionDestinoId)
 
@@ -172,44 +178,26 @@ const Prestamos = () => {
         return
       }
 
-      // 3. Actualizar el estado del transporte a DISPONIBLE
+      // 4. Actualizar el estado del transporte a DISPONIBLE
       await transportesAPI.crear({
         ...transporte,
         estado: 'DISPONIBLE'
       })
 
-      // 4. Quitar el transporte de la estación origen y agregarlo a la estación destino
-      const transportesOrigenActualizados = (estacionOrigen.transportes || [])
-        .filter(id => id !== prestamo.transporteId)
-      
+      // 5. Actualizar estaciones
       const transportesDestinoActualizados = [
         ...(estacionDestino.transportes || []),
         prestamo.transporteId
       ]
 
-      // 5. Actualizar estación origen
-      if (estacionOrigen) {
-        await estacionesAPI.crear({
-          ...estacionOrigen,
-          transportes: transportesOrigenActualizados
-        })
-      }
-
-      // 6. Actualizar estación destino con nueva capacidad y transporte
       await estacionesAPI.crear({
         ...estacionDestino,
         capacidad: estacionDestino.capacidad + 1,
         transportes: transportesDestinoActualizados
       })
 
-      // 7. Finalizar el préstamo
-      await prestamosAPI.finalizar(prestamo.id, {
-        estado: 'COMPLETADO',
-        fechaFin: new Date().toISOString()
-      })
-
       toast.success('Préstamo finalizado correctamente')
-      cargarDatos() // Recargar datos para actualizar la vista
+      cargarDatos()
     } catch (error) {
       console.error('Error finalizando préstamo:', error)
       toast.error('Error al finalizar el préstamo')
@@ -538,8 +526,12 @@ const Prestamos = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-eco-green-100 text-eco-green-800">
-                        {prestamo.estado || 'ACTIVO'}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        prestamo.transporte?.estado === 'EN_USO' 
+                          ? 'bg-eco-green-100 text-eco-green-800'
+                          : 'bg-eco-gray-100 text-eco-gray-800'
+                      }`}>
+                        {prestamo.transporte?.estado === 'EN_USO' ? 'ACTIVO' : 'INACTIVO'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -556,12 +548,16 @@ const Prestamos = () => {
                         >
                           <Trash2 size={16} />
                         </button>
-                        <button
-                          onClick={() => finalizarPrestamo(prestamo)}
-                          className="text-eco-blue-600 hover:text-eco-blue-900 p-1"
-                        >
-                          <Eye size={16} />
-                        </button>
+                        {/* Botón de finalizar solo aparece si el transporte está EN_USO */}
+                        {prestamo.transporte?.estado === 'EN_USO' && (
+                          <button
+                            onClick={() => finalizarPrestamo(prestamo)}
+                            className="text-eco-blue-600 hover:text-eco-blue-900 p-1"
+                            title="Finalizar préstamo"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
