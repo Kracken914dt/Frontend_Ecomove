@@ -88,37 +88,50 @@ const Prestamos = () => {
     }
   }
 
+  // Agregar una función de validación
+  const validarTransporteEnEstacion = (transporteId, estacionId) => {
+    const estacion = estaciones.find(e => e.id === estacionId)
+    return estacion?.transportes?.includes(transporteId)
+  }
+
+  // Modificar el onSubmit para incluir la validación
   const onSubmit = async (data) => {
     try {
       if (editingLoan) {
         // Manejo de edición...
       } else {
-        // 1. Obtener la estación origen
+        // 1. Validar que el transporte esté en la estación origen
+        if (!validarTransporteEnEstacion(data.transporteId, data.estacionOrigenId)) {
+          toast.error('El vehículo seleccionado no se encuentra en la estación de origen')
+          return
+        }
+
+        // 2. Obtener la estación origen
         const estacionOrigen = estaciones.find(e => e.id === data.estacionOrigenId)
         if (!estacionOrigen) {
           toast.error('Estación de origen no encontrada')
           return
         }
 
-        // 2. Verificar capacidad disponible
+        // 3. Verificar capacidad disponible
         if (estacionOrigen.capacidad <= 0) {
           toast.error('La estación de origen no tiene vehículos disponibles')
           return
         }
 
-        // 3. Actualizar estado del transporte a EN_USO
+        // 4. Actualizar estado del transporte a EN_USO
         await transportesAPI.crear({
           ...transportes.find(t => t.id === data.transporteId),
           estado: 'EN_USO'
         })
 
-        // 4. Actualizar capacidad de la estación origen
+        // 5. Actualizar capacidad de la estación origen
         await estacionesAPI.crear({
           ...estacionOrigen,
           capacidad: estacionOrigen.capacidad - 1
         })
 
-        // 5. Crear el préstamo
+        // 6. Crear el préstamo
         await prestamosAPI.crear({
           ...data,
           estado: 'EN_CURSO'
@@ -311,13 +324,28 @@ const Prestamos = () => {
                   Estación de origen
                 </label>
                 <select
-                  {...register('estacionOrigenId', { required: 'La estación de origen es requerida' })}
+                  {...register('estacionOrigenId', { 
+                    required: 'La estación de origen es requerida',
+                    onChange: (e) => {
+                      const transporteId = document.querySelector('select[name="transporteId"]').value
+                      if (transporteId && !validarTransporteEnEstacion(transporteId, e.target.value)) {
+                        toast.error('El vehículo seleccionado no se encuentra en esta estación')
+                      }
+                    }
+                  })}
                   className="input-field"
                 >
                   <option value="">Seleccionar estación origen</option>
                   {estaciones.map(estacion => (
-                    <option key={estacion.id} value={estacion.id}>
-                      Estación {estacion.ubicacion}
+                    <option 
+                      key={estacion.id} 
+                      value={estacion.id}
+                      disabled={selectedTransport && !validarTransporteEnEstacion(selectedTransport.id, estacion.id)}
+                    >
+                      Estación {estacion.ubicacion} 
+                      {selectedTransport && !validarTransporteEnEstacion(selectedTransport.id, estacion.id) 
+                        ? ' (No tiene el vehículo seleccionado)' 
+                        : ''}
                     </option>
                   ))}
                 </select>
