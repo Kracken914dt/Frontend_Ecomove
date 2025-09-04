@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { MapPin, Plus, Edit, Trash2, Search, Building, Map } from 'lucide-react'
-import { estacionesAPI } from '../services/api'
+import { estacionesAPI, transportesAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const Estaciones = () => {
   const [estaciones, setEstaciones] = useState([])
+  const [transportes, setTransportes] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingStation, setEditingStation] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [transportesAsignados, setTransportesAsignados] = useState({})
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
 
@@ -20,15 +22,36 @@ const Estaciones = () => {
   const cargarEstaciones = async () => {
     try {
       setLoading(true)
-      const response = await estacionesAPI.listar()
+      const [estacionesRes, transportesRes] = await Promise.all([
+        estacionesAPI.listar(),
+        transportesAPI.listar()
+      ])
+      
       // Filtramos estaciones activas
-      const estacionesActivas = response.data.filter(
+      const estacionesActivas = estacionesRes.data.filter(
         estacion => !estacion.eliminado && estacion.estado !== 'INACTIVO'
       )
       setEstaciones(estacionesActivas)
+
+      // Crear mapa de transportes asignados
+      const transportesAsignadosMap = {}
+      estacionesActivas.forEach(estacion => {
+        if (estacion.transportes) {
+          estacion.transportes.forEach(transporteId => {
+            transportesAsignadosMap[transporteId] = estacion.id
+          })
+        }
+      })
+      setTransportesAsignados(transportesAsignadosMap)
+
+      // Filtramos transportes disponibles
+      const transportesDisponibles = transportesRes.data.filter(
+        transporte => transporte.estado === 'DISPONIBLE'
+      )
+      setTransportes(transportesDisponibles)
     } catch (error) {
-      toast.error('Error al cargar estaciones')
-      console.error('Error cargando estaciones:', error)
+      toast.error('Error al cargar datos')
+      console.error('Error cargando datos:', error)
     } finally {
       setLoading(false)
     }
@@ -36,15 +59,34 @@ const Estaciones = () => {
 
   const onSubmit = async (data) => {
     try {
+      // Validar que los transportes seleccionados no estén asignados a otras estaciones
+      const transportesSeleccionados = Array.isArray(data.transportes) ? 
+        data.transportes : [data.transportes]
+
+      const transportesInvalidos = transportesSeleccionados.filter(transporteId => {
+        const estacionAsignada = transportesAsignados[transporteId]
+        return estacionAsignada && (!editingStation || estacionAsignada !== editingStation.id)
+      })
+
+      if (transportesInvalidos.length > 0) {
+        toast.error('Algunos transportes seleccionados ya están asignados a otras estaciones')
+        return
+      }
+
+      const estacionData = {
+        ...data,
+        capacidad: parseInt(data.capacidad),
+        transportes: transportesSeleccionados
+      }
+
       if (editingStation) {
-        // Simulamos actualización creando un nuevo registro con el mismo ID
         await estacionesAPI.crear({
-          ...data,
+          ...estacionData,
           id: editingStation.id
         })
         toast.success('Estación actualizada correctamente')
       } else {
-        await estacionesAPI.crear(data)
+        await estacionesAPI.crear(estacionData)
         toast.success('Estación creada correctamente')
       }
       reset()
@@ -169,6 +211,40 @@ const Estaciones = () => {
                   />
                   {errors.capacidad && (
                     <p className="text-red-500 text-sm mt-2">{errors.capacidad.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold text-eco-gray-700 mb-3">
+                    🚲 Transportes Disponibles *
+                  </label>
+                  <select
+                    multiple
+                    {...register('transportes', { required: 'Seleccione al menos un transporte' })}
+                    className="w-full px-4 py-3 border border-eco-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent transition-all duration-200 min-h-[120px]"
+                  >
+                    {transportes.map((transporte) => {
+                      const estacionAsignada = transportesAsignados[transporte.id]
+                      const estacionActual = editingStation ? editingStation.id : null
+                      const estaAsignadoAOtraEstacion = estacionAsignada && estacionAsignada !== estacionActual
+                      
+                      return (
+                        <option 
+                          key={transporte.id} 
+                          value={transporte.id}
+                          disabled={estaAsignadoAOtraEstacion}
+                          className={estaAsignadoAOtraEstacion ? 'text-gray-400' : ''}
+                        >
+                          {transporte.tipo} 
+                          {estaAsignadoAOtraEstacion ? ' (Asignado a otra estación)' : ''}
+                        </option>
+                      )
+                    })}
+                  </select>
+                  {errors.transportes && (
+                    <p className="text-red-500 text-sm mt-2">{errors.transportes.message}</p>
                   )}
                 </div>
               </div>
@@ -316,9 +392,19 @@ const Estaciones = () => {
                     
                     {estacion.transportes && estacion.transportes.length > 0 && (
                       <div className="mt-3 p-3 bg-eco-gray-50 rounded-lg">
-                        <p className="text-sm text-eco-gray-600">
-                          <strong>Transportes:</strong> {estacion.transportes.length} disponibles
+                        <p className="text-sm text-eco-gray-600 font-semibold mb-2">
+                          Transportes asignados:
                         </p>
+                        <div className="flex flex-wrap gap-2">
+                          {estacion.transportes.map((transporteId) => {
+                            const transporte = transportes.find(t => t.id === transporteId)
+                            return (
+                              <span key={transporteId} className="px-2 py-1 bg-eco-green-100 text-eco-green-800 rounded-lg text-sm">
+                                {transporte ? transporte.tipo : 'Transporte'} 
+                              </span>
+                            )
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>

@@ -26,45 +26,45 @@ const Prestamos = () => {
     try {
       setLoading(true)
       
-      // Primero obtenemos toda la información necesaria
       const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
         usuariosAPI.listar(),
         transportesAPI.listar(),
         estacionesAPI.listar()
       ])
 
-      // Filtramos usuarios activos
+      // Filtrar usuarios activos
       const usuariosActivos = usuariosRes.data.filter(
         usuario => usuario.nombre && usuario.correo && usuario.documento
       )
       setUsuarios(usuariosActivos)
 
-      // Guardamos todas las entidades en mapas para búsqueda rápida
-      const transportesMap = transportesRes.data.reduce((map, t) => {
+      // Filtrar transportes y crear mapa
+      const transportesActivos = transportesRes.data.filter(
+        transporte => Object.keys(transporte).length > 1
+      )
+      const transportesMap = transportesActivos.reduce((map, t) => {
         map[t.id] = t
         return map
       }, {})
-      setTransportes(transportesRes.data)
+      setTransportes(transportesActivos)
 
-      const estacionesMap = estacionesRes.data.reduce((map, e) => {
+      // Filtrar estaciones y crear mapa
+      const estacionesActivas = estacionesRes.data.filter(
+        estacion => Object.keys(estacion).length > 1
+      )
+      const estacionesMap = estacionesActivas.reduce((map, e) => {
         map[e.id] = e
         return map
       }, {})
-      setEstaciones(estacionesRes.data)
+      setEstaciones(estacionesActivas)
 
-      const usuariosMap = usuariosActivos.reduce((map, u) => {
-        map[u.id] = u
-        return map
-      }, {})
-
-      // Obtenemos los préstamos por cada usuario activo
+      // Obtener préstamos con información relacionada
       const prestamosPromesas = usuariosActivos.map(usuario =>
         prestamosAPI.historialPorUsuario(usuario.id)
           .then(response => {
-            // Por cada préstamo, agregamos la información relacionada
             return response.data.map(prestamo => ({
               ...prestamo,
-              usuario: usuariosMap[prestamo.usuarioId] || { nombre: 'Usuario no encontrado' },
+              usuario: usuariosActivos.find(u => u.id === prestamo.usuarioId) || { nombre: 'Usuario no encontrado' },
               transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
               estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
               estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
@@ -76,12 +76,8 @@ const Prestamos = () => {
           })
       )
 
-      // Esperamos todas las promesas de préstamos
       const prestamosPorUsuario = await Promise.all(prestamosPromesas)
-      
-      // Aplanamos el array de arrays de préstamos
       const todosLosPrestamos = prestamosPorUsuario.flat()
-      
       setPrestamos(todosLosPrestamos)
       
     } catch (error) {
@@ -95,18 +91,47 @@ const Prestamos = () => {
   const onSubmit = async (data) => {
     try {
       if (editingLoan) {
-        // TODO: Implementar actualización cuando el backend lo soporte
-        toast.success('Préstamo actualizado correctamente')
+        // Manejo de edición...
       } else {
-        await prestamosAPI.crear(data)
+        // 1. Obtener la estación origen
+        const estacionOrigen = estaciones.find(e => e.id === data.estacionOrigenId)
+        if (!estacionOrigen) {
+          toast.error('Estación de origen no encontrada')
+          return
+        }
+
+        // 2. Verificar capacidad disponible
+        if (estacionOrigen.capacidad <= 0) {
+          toast.error('La estación de origen no tiene vehículos disponibles')
+          return
+        }
+
+        // 3. Actualizar estado del transporte a EN_USO
+        await transportesAPI.crear({
+          ...transportes.find(t => t.id === data.transporteId),
+          estado: 'EN_USO'
+        })
+
+        // 4. Actualizar capacidad de la estación origen
+        await estacionesAPI.crear({
+          ...estacionOrigen,
+          capacidad: estacionOrigen.capacidad - 1
+        })
+
+        // 5. Crear el préstamo
+        await prestamosAPI.crear({
+          ...data,
+          estado: 'EN_CURSO'
+        })
+
         toast.success('Préstamo creado correctamente')
+        reset()
+        setShowForm(false)
+        setEditingLoan(null)
+        setSelectedUser(null)
+        setSelectedTransport(null)
+        cargarDatos()
       }
-      reset()
-      setShowForm(false)
-      setEditingLoan(null)
-      setSelectedUser(null)
-      setSelectedTransport(null)
-      cargarDatos()
     } catch (error) {
       toast.error('Error al guardar préstamo')
       console.error('Error guardando préstamo:', error)
@@ -217,16 +242,19 @@ const Prestamos = () => {
                   {...register('transporteId', { required: 'El transporte es requerido' })}
                   className="input-field"
                   onChange={(e) => {
-                    const transport = transportes.find(t => t.id == e.target.value)
+                    const transport = transportes.find(t => t.id === e.target.value)
                     setSelectedTransport(transport)
                   }}
                 >
                   <option value="">Seleccionar transporte</option>
-                  {transportesDisponibles.map(transporte => (
-                    <option key={transporte.id} value={transporte.id}>
-                      Transporte {transporte.tipo}
-                    </option>
-                  ))}
+                  {transportes
+                    .filter(t => t.estado === 'DISPONIBLE')
+                    .map(transporte => (
+                      <option key={transporte.id} value={transporte.id}>
+                        Transporte {transporte.tipo}
+                      </option>
+                    ))
+                  }
                 </select>
                 {errors.transporteId && (
                   <p className="text-red-500 text-sm mt-1">{errors.transporteId.message}</p>

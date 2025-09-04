@@ -19,69 +19,78 @@ const cargarDatos = async () => {
   try {
     setLoading(true)
     
-    // Primero obtenemos toda la información necesaria
+    // 1. Primero obtenemos usuarios y datos maestros
     const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
       usuariosAPI.listar(),
       transportesAPI.listar(),
       estacionesAPI.listar()
     ])
 
-    // Filtramos usuarios activos
+    // 2. Filtramos usuarios activos
     const usuariosActivos = usuariosRes.data.filter(
-      usuario => usuario.nombre && usuario.correo && usuario.documento
+      usuario => usuario.nombre && usuario.correo
     )
     setUsuarios(usuariosActivos)
 
-    // Guardamos todas las entidades en mapas para búsqueda rápida
+    // 3. Crear mapas para búsqueda rápida
     const transportesMap = transportesRes.data.reduce((map, t) => {
-      map[t.id] = t
+      if (t.tipo) map[t.id] = t
       return map
     }, {})
 
     const estacionesMap = estacionesRes.data.reduce((map, e) => {
-      map[e.id] = e
+      if (e.ubicacion) map[e.id] = e
       return map
     }, {})
 
-    const usuariosMap = usuariosActivos.reduce((map, u) => {
-      map[u.id] = u
-      return map
-    }, {})
-
-    // Obtenemos los préstamos por cada usuario activo
-    const prestamosPromesas = usuariosActivos.map(usuario =>
-      prestamosAPI.historialPorUsuario(usuario.id)
-        .then(response => {
-          // Por cada préstamo, agregamos la información relacionada
-          return response.data.map(prestamo => ({
-            ...prestamo,
-            usuario: usuariosMap[prestamo.usuarioId] || { nombre: 'Usuario no encontrado' },
-            transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
-            estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
-            estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
-          }))
-        })
-        .catch(error => {
-          console.error(`Error obteniendo préstamos del usuario ${usuario.id}:`, error)
-          return []
-        })
-    )
-
-    // Esperamos todas las promesas de préstamos
-    const prestamosPorUsuario = await Promise.all(prestamosPromesas)
+    // 4. Obtener préstamos solo del usuario seleccionado si hay uno
+    let todosLosPrestamos = []
     
-    // Aplanamos el array de arrays de préstamos
-    const todosLosPrestamos = prestamosPorUsuario.flat()
-    
-    setPrestamos(todosLosPrestamos)
+    if (selectedUser) {
+      // Si hay un usuario seleccionado, solo traemos sus préstamos
+      try {
+        const prestamosRes = await prestamosAPI.historialPorUsuario(selectedUser)
+        todosLosPrestamos = prestamosRes.data
+      } catch (error) {
+        console.error('Error obteniendo préstamos del usuario:', error)
+      }
+    } else {
+      // Si no hay usuario seleccionado, traemos los préstamos de todos
+      const prestamosPromesas = usuariosActivos.map(usuario =>
+        prestamosAPI.historialPorUsuario(usuario.id)
+          .then(response => response.data)
+          .catch(() => [])
+      )
+      const resultados = await Promise.all(prestamosPromesas)
+      todosLosPrestamos = resultados.flat()
+    }
+
+    // 5. Enriquecer los préstamos con información relacionada
+    const prestamosConInfo = todosLosPrestamos.map(prestamo => {
+      const usuario = usuariosActivos.find(u => u.id === prestamo.usuarioId)
+      return {
+        ...prestamo,
+        usuario: usuario || { nombre: 'Usuario no encontrado' },
+        transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
+        estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { ubicacion: 'No disponible' },
+        estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { ubicacion: 'No disponible' }
+      }
+    })
+
+    setPrestamos(prestamosConInfo)
     
   } catch (error) {
-    toast.error('Error al cargar datos')
     console.error('Error cargando datos:', error)
+    toast.error('Error al cargar los datos del historial')
   } finally {
     setLoading(false)
   }
 }
+
+// Actualizar useEffect para recargar cuando cambie el usuario seleccionado
+useEffect(() => {
+  cargarDatos()
+}, [selectedUser]) // Agregamos selectedUser como dependencia
 
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -347,8 +356,8 @@ const cargarDatos = async () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(prestamo.estado)}`}>
-                        {getEstadoText(prestamo.estado)}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(prestamo.transporte?.estado)}`}>
+                        {getEstadoText(prestamo.transporte?.estado)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
