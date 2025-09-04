@@ -1,297 +1,153 @@
 import React, { useState, useEffect } from 'react'
-import { CreditCard, Search, Filter, DollarSign, Calendar, User, Clock, Eye, Download } from 'lucide-react'
-import { pagosAPI, prestamosAPI } from '../services/api'
+import { DollarSign, Search, User } from 'lucide-react'
+import { prestamosAPI, usuariosAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const Pagos = () => {
   const [pagos, setPagos] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
 
-
   useEffect(() => {
-    console.log('Pagos component mounted, calling cargarPagos...')
     cargarPagos()
   }, [])
 
   const cargarPagos = async () => {
     try {
-      console.log('Iniciando carga de pagos...')
       setLoading(true)
-      setError(null)
       
-      const response = await pagosAPI.listar()
-      console.log('Respuesta de la API:', response)
-      console.log('Datos de pagos:', response.data)
+      // Obtener usuarios para tener la información
+      const usuariosRes = await usuariosAPI.listar()
+      const usuariosMap = usuariosRes.data.reduce((map, usuario) => {
+        map[usuario.id] = usuario
+        return map
+      }, {})
+
+      // Obtener préstamos con costo
+      const prestamosPromesas = Object.keys(usuariosMap).map(usuarioId =>
+        prestamosAPI.historialPorUsuario(usuarioId)
+          .then(response => {
+            return response.data.map(prestamo => ({
+              ...prestamo,
+              usuario: usuariosMap[prestamo.usuarioId]
+            }))
+          })
+          .catch(() => [])
+      )
+
+      const todosLosPrestamos = (await Promise.all(prestamosPromesas)).flat()
       
-      // Si no hay datos, usar un array vacío
-      const pagosData = response.data || []
-      console.log('Pagos procesados:', pagosData)
-      
-      setPagos(pagosData)
-      
-      // Si no hay pagos, mostrar un mensaje informativo
-      if (pagosData.length === 0) {
-        console.log('No hay pagos en el sistema')
-      }
-      
+      // Filtrar préstamos con costo y añadir información necesaria
+      const pagosFormateados = todosLosPrestamos
+        .filter(prestamo => prestamo.costo > 0)
+        .map(prestamo => ({
+          id: prestamo.id,
+          usuarioNombre: prestamo.usuario?.nombre || 'Usuario no encontrado',
+          costo: prestamo.costo,
+          fecha: new Date(prestamo.inicio).toLocaleDateString(),
+          metodoPago: 'Efectivo'
+        }))
+
+      setPagos(pagosFormateados)
     } catch (error) {
-      console.error('Error completo cargando pagos:', error)
-      setError(error.message || 'Error desconocido al cargar pagos')
-      toast.error(`Error al cargar pagos: ${error.message}`)
+      console.error('Error cargando pagos:', error)
+      toast.error('Error al cargar los pagos')
     } finally {
       setLoading(false)
-      console.log('Estado final - loading:', false, 'pagos:', pagos.length)
     }
   }
 
+  // Filtrar pagos por búsqueda
+  const pagosFiltrados = pagos.filter(pago =>
+    pago.usuarioNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pago.fecha.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-
-  const getMetodoPagoIcon = (metodo) => {
-    switch (metodo) {
-      case 'EFECTIVO':
-        return <DollarSign className="h-4 w-4" />
-      case 'TARJETA':
-        return <CreditCard className="h-4 w-4" />
-      case 'TRANSFERENCIA':
-        return <CreditCard className="h-4 w-4" />
-      default:
-        return <DollarSign className="h-4 w-4" />
-    }
-  }
-
-  const filteredPagos = pagos.filter(pago => {
-    const matchesSearch = pago.id?.toString().includes(searchTerm)
-    
-    return matchesSearch
-  })
-
-  const getDateFilterText = (days) => {
-    switch (days) {
-      case '7':
-        return 'Últimos 7 días'
-      case '30':
-        return 'Últimos 30 días'
-      case '90':
-        return 'Últimos 90 días'
-      case '365':
-        return 'Último año'
-      default:
-        return 'Todos los días'
-    }
-  }
-
-  const calcularTotal = () => {
-    return pagos.reduce((total, pago) => total + (pago.monto || 0), 0)
-  }
-
-  const calcularPromedio = () => {
-    if (pagos.length === 0) return 0
-    return calcularTotal() / pagos.length
-  }
-
-  console.log('Renderizando componente Pagos, estado actual:', { loading, error, pagosCount: pagos.length })
-  
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-eco-gray-900">Gestión de Pagos</h1>
+        <h1 className="text-3xl font-bold text-eco-gray-900">Pagos</h1>
         <p className="mt-2 text-eco-gray-600">
-          Administra y consulta todos los pagos del sistema EcoMove
+          Historial de pagos por préstamos
         </p>
       </div>
 
-      {/* Filtros */}
-      <div className="card">
-        <h2 className="text-lg font-semibold text-eco-gray-900 mb-4">Filtros de Búsqueda</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-          {/* Búsqueda por ID */}
-          <div>
-            <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-              Buscar por ID
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-eco-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Buscar por ID de pago..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-eco-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-
+      {/* Buscador */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-eco-gray-400" />
+        <input
+          type="text"
+          placeholder="Buscar por usuario o fecha..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 pr-4 py-2 w-full border border-eco-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent"
+        />
       </div>
 
-      {/* Estadísticas de pagos */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-eco-green-600">
-            {pagos.length}
-          </div>
-          <div className="text-sm text-eco-gray-600">Total de pagos</div>
+      {/* Tabla de pagos */}
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-eco-green-600 mx-auto"></div>
+          <p className="mt-2 text-eco-gray-600">Cargando pagos...</p>
         </div>
-        
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-eco-green-600">
-            ${calcularTotal().toFixed(2)}
-          </div>
-          <div className="text-sm text-eco-gray-600">Total recaudado</div>
-        </div>
-        
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-blue-600">
-            ${calcularPromedio().toFixed(2)}
-          </div>
-          <div className="text-sm text-eco-gray-600">Promedio por pago</div>
-        </div>
-        
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-yellow-600">
-            {pagos.length > 0 ? pagos.length : 0}
-          </div>
-          <div className="text-sm text-eco-gray-600">Total registros</div>
-        </div>
-      </div>
-
-      {/* Lista de pagos */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-eco-gray-900">Lista de Pagos</h2>
-          <div className="flex space-x-2">
-
-            <button className="btn-secondary flex items-center space-x-2">
-              <Download size={16} />
-              <span>Exportar</span>
-            </button>
-          </div>
-        </div>
-        
-        {error ? (
-          <div className="text-center py-8">
-            <div className="text-red-600 mb-4">
-              <CreditCard className="mx-auto h-12 w-12 text-red-400" />
-            </div>
-            <p className="text-red-600 font-medium">Error al cargar los pagos</p>
-            <p className="text-red-500 text-sm mt-1">{error}</p>
-            <button 
-              onClick={cargarPagos}
-              className="mt-4 btn-primary"
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-eco-green-600 mx-auto"></div>
-            <p className="mt-2 text-eco-gray-600">Cargando pagos...</p>
-          </div>
-        ) : filteredPagos.length === 0 ? (
-          <div className="text-center py-8">
-            <CreditCard className="mx-auto h-12 w-12 text-eco-gray-400" />
-            <p className="mt-2 text-eco-gray-600">
-              {searchTerm ? 'No se encontraron pagos que coincidan con la búsqueda' : 'No hay pagos registrados'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-eco-gray-200">
-              <thead className="bg-eco-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Pago
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Monto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Método
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
+      ) : (
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-eco-gray-200">
+            <thead className="bg-eco-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
+                  Usuario
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
+                  Costo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
+                  Método de Pago
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-eco-gray-500 uppercase tracking-wider">
+                  Fecha
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-eco-gray-200">
+              {pagosFiltrados.map((pago) => (
+                <tr key={pago.id} className="hover:bg-eco-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <User className="h-5 w-5 text-eco-gray-400 mr-2" />
+                      <span className="text-sm text-eco-gray-900">
+                        {pago.usuarioNombre}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <DollarSign className="h-5 w-5 text-eco-green-500 mr-1" />
+                      <span className="text-sm font-medium text-eco-gray-900">
+                        ${pago.costo.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-eco-blue-100 text-eco-blue-800">
+                      {pago.metodoPago}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-500">
+                    {pago.fecha}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-eco-gray-200">
-                {filteredPagos.map((pago) => (
-                  <tr key={pago.id} className="hover:bg-eco-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-lg bg-eco-green-100 flex items-center justify-center">
-                          <CreditCard className="h-5 w-5 text-eco-green-600" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-eco-gray-900">
-                            #{pago.id}
-                          </div>
-                          <div className="text-sm text-eco-gray-500">
-                            ID: {pago.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
-                      <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 text-eco-gray-400 mr-1" />
-                        <span className="font-medium">
-                          ${pago.monto ? pago.monto.toFixed(2) : '0.00'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {getMetodoPagoIcon(pago.metodo)}
-                        <span className="ml-2 text-sm text-eco-gray-900">
-                          {pago.metodo || 'Efectivo'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-eco-gray-900">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 text-eco-gray-400 mr-2" />
-                        <span>
-                          {pago.fecha ? new Date(pago.fecha).toLocaleDateString() : 'Sin fecha'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-eco-green-600 hover:text-eco-green-900 p-1">
-                        <Eye size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Información adicional */}
-      <div className="card bg-eco-green-50 border-eco-green-200">
-        <div className="flex items-center">
-          <div className="p-3 rounded-lg bg-eco-green-500">
-            <CreditCard className="h-6 w-6 text-white" />
-          </div>
-          <div className="ml-4">
-            <h3 className="text-lg font-semibold text-eco-green-800">
-              Sistema de Pagos EcoMove
-            </h3>
-            <p className="text-eco-green-700">
-              Todos los pagos se procesan de forma segura y se registran automáticamente en el sistema.
-            </p>
-          </div>
+              ))}
+            </tbody>
+          </table>
+          {pagosFiltrados.length === 0 && (
+            <div className="text-center py-8 text-eco-gray-500">
+              No se encontraron pagos
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }

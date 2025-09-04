@@ -59,12 +59,12 @@ const Layout = () => {
       icon: BarChart3, 
       description: 'Historial de préstamos'
     },
-    { 
-      name: 'Pagos', 
-      href: '/pagos', 
-      icon: CreditCard, 
-      description: 'Gestión de pagos'
-    },
+    //{ 
+      //name: 'Pagos', 
+      //href: '/pagos', 
+      //icon: CreditCard, 
+      //description: 'Gestión de pagos'
+    //},
   ]
 
   const isActive = (path) => location.pathname === path
