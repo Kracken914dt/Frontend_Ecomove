@@ -56,7 +56,8 @@ export const pagosAPI = {
 }
 
 export const geocodeAPI = {
-  geocode: (address) => api.get(`/geocode?address=${address}`),
+  geocode: (address) => api.get(`/geocode?address=${encodeURIComponent(address)}`),
 }
+
 
 export default api
