@@ -186,8 +186,8 @@ const Prestamos = () => {
       const estacionOrigen = estaciones.find(e => e.id === prestamo.estacionOrigenId)
       const estacionDestino = estaciones.find(e => e.id === prestamo.estacionDestinoId)
 
-      if (!estacionDestino) {
-        toast.error('Estación de destino no encontrada')
+      if (!estacionDestino || !estacionOrigen) {
+        toast.error('Error: No se encontraron las estaciones')
         return
       }
 
@@ -197,7 +197,16 @@ const Prestamos = () => {
         estado: 'DISPONIBLE'
       })
 
-      // 5. Actualizar estaciones
+      // 5. Quitar el transporte de la estación origen
+      const transportesOrigenActualizados = (estacionOrigen.transportes || [])
+        .filter(id => id !== prestamo.transporteId)
+
+      await estacionesAPI.crear({
+        ...estacionOrigen,
+        transportes: transportesOrigenActualizados
+      })
+
+      // 6. Añadir el transporte a la estación destino
       const transportesDestinoActualizados = [
         ...(estacionDestino.transportes || []),
         prestamo.transporteId

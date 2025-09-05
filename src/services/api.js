@@ -57,4 +57,8 @@ export const pagosAPI = {
   obtenerPorId: (id) => api.get(`/pagos/${id}`),
 }
 
+export const geocodeAPI = {
+  geocode: (address) => api.get(`/geocode?address=${address}`),
+}
+
 export default api
