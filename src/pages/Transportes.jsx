@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Truck, Plus, Edit, Trash2, Search, Bike, Zap, MapPin } from 'lucide-react'
 import { transportesAPI, estacionesAPI } from '../services/api'
+import ConfirmationModal from '../components/ui/ConfirmationModal'
 import toast from 'react-hot-toast'
 
 const Transportes = () => {
@@ -11,6 +12,13 @@ const Transportes = () => {
   const [showForm, setShowForm] = useState(false)
   const [editingTransport, setEditingTransport] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'danger'
+  })
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
 
@@ -98,22 +106,34 @@ const Transportes = () => {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este transporte?')) {
-      try {
-        // Simulamos eliminación creando un nuevo registro con estado inactivo
-        await transportesAPI.crear({
-          id: id,
-          estado: 'FUERA_DE_SERVICIO',
-          eliminado: true
-        })
-        toast.success('Transporte eliminado correctamente')
-        cargarDatos()
-      } catch (error) {
-        toast.error('Error al eliminar transporte')
-        console.error('Error eliminando transporte:', error)
-      }
+  const handleDelete = (transporte) => {
+    setModalConfig({
+      isOpen: true,
+      title: '¿Estás seguro?',
+      message: `¿Estás seguro que deseas eliminar el transporte ${transporte.tipo} (ID: ${transporte.id})? Esta acción no se puede deshacer.`,
+      onConfirm: () => confirmDelete(transporte.id),
+      type: 'danger'
+    })
+  }
+
+  const confirmDelete = async (id) => {
+    try {
+      // Simulamos eliminación creando un nuevo registro con estado inactivo
+      await transportesAPI.crear({
+        id: id,
+        estado: 'FUERA_DE_SERVICIO',
+        eliminado: true
+      })
+      toast.success('Transporte eliminado correctamente')
+      cargarDatos()
+    } catch (error) {
+      toast.error('Error al eliminar transporte')
+      console.error('Error eliminando transporte:', error)
     }
+  }
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }))
   }
 
   const getEstadoColor = (estado) => {
@@ -357,7 +377,7 @@ const Transportes = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(transporte.id)}
+                          onClick={() => handleDelete(transporte)}
                           className="text-red-600 hover:text-red-900 p-1"
                         >
                           <Trash2 size={16} />
@@ -371,6 +391,16 @@ const Transportes = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   )
 }

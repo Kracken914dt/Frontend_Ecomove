@@ -10,6 +10,7 @@ import {
   Map,
 } from "lucide-react";
 import { estacionesAPI, transportesAPI } from "../services/api";
+import ConfirmationModal from "../components/ui/ConfirmationModal";
 import toast from "react-hot-toast";
 import MapaModal from "../components/MapaModal";
 
@@ -22,6 +23,13 @@ const Estaciones = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [transportesAsignados, setTransportesAsignados] = useState({});
   const [estacionSeleccionada, setEstacionSeleccionada] = useState(null);
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'danger'
+  });
 
   const {
     register,
@@ -135,25 +143,35 @@ const Estaciones = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (
-      window.confirm("¿Estás seguro de que quieres eliminar esta estación?")
-    ) {
-      try {
-        // Simulamos eliminación creando un nuevo registro con estado inactivo
-        await estacionesAPI.crear({
-          id: id,
-          estado: "INACTIVO",
-          eliminado: true,
-        });
-        toast.success("Estación eliminada correctamente");
-        cargarEstaciones();
-      } catch (error) {
-        toast.error("Error al eliminar estación");
-        console.error("Error eliminando estación:", error);
-      }
+  const handleDelete = (estacion) => {
+    setModalConfig({
+      isOpen: true,
+      title: '¿Estás seguro?',
+      message: `¿Estás seguro que deseas eliminar la estación "${estacion.ubicacion}"? Esta acción no se puede deshacer.`,
+      onConfirm: () => confirmDelete(estacion.id),
+      type: 'danger'
+    })
+  }
+
+  const confirmDelete = async (id) => {
+    try {
+      // Simulamos eliminación creando un nuevo registro con estado inactivo
+      await estacionesAPI.crear({
+        id: id,
+        estado: "INACTIVO",
+        eliminado: true,
+      });
+      toast.success("Estación eliminada correctamente");
+      cargarEstaciones();
+    } catch (error) {
+      toast.error("Error al eliminar estación");
+      console.error("Error eliminando estación:", error);
     }
-  };
+  }
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }))
+  }
 
   const filteredEstaciones = estaciones.filter((estacion) =>
     estacion.ubicacion?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -429,7 +447,7 @@ const Estaciones = () => {
                         <Edit size={18} />
                       </button>
                       <button
-                        onClick={() => handleDelete(estacion.id)}
+                        onClick={() => handleDelete(estacion)}
                         className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-colors duration-200"
                       >
                         <Trash2 size={18} />
@@ -501,11 +519,21 @@ const Estaciones = () => {
         )}
       </div>
       {estacionSeleccionada && (
-      <MapaModal
-        estacion={estacionSeleccionada}
-        onClose={() => setEstacionSeleccionada(null)}
+        <MapaModal
+          estacion={estacionSeleccionada}
+          onClose={() => setEstacionSeleccionada(null)}
+        />
+      )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
       />
-    )}
     </div>
   );
 };

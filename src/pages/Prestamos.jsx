@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Clock, Plus, Edit, Trash2, Search, User, MapPin, Truck, CreditCard, Eye } from 'lucide-react'
 import { prestamosAPI, usuariosAPI, transportesAPI, estacionesAPI } from '../services/api'
+import ConfirmationModal from '../components/ui/ConfirmationModal'
 import toast from 'react-hot-toast'
 
 const Prestamos = () => {
@@ -15,6 +16,13 @@ const Prestamos = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [selectedTransport, setSelectedTransport] = useState(null)
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'danger'
+  })
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
 
@@ -157,17 +165,29 @@ const Prestamos = () => {
     setShowForm(true)
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este préstamo?')) {
-      try {
-        // TODO: Implementar eliminación cuando el backend lo soporte
-        toast.success('Préstamo eliminado correctamente')
-        cargarDatos()
-      } catch (error) {
-        toast.error('Error al eliminar préstamo')
-        console.error('Error eliminando préstamo:', error)
-      }
+  const handleDelete = (prestamo) => {
+    setModalConfig({
+      isOpen: true,
+      title: '¿Estás seguro?',
+      message: `¿Estás seguro que deseas eliminar el préstamo #${prestamo.id} del usuario ${prestamo.usuario?.nombre || 'desconocido'}? Esta acción no se puede deshacer.`,
+      onConfirm: () => confirmDelete(prestamo.id),
+      type: 'danger'
+    })
+  }
+
+  const confirmDelete = async (id) => {
+    try {
+      // TODO: Implementar eliminación cuando el backend lo soporte
+      toast.success('Préstamo eliminado correctamente')
+      cargarDatos()
+    } catch (error) {
+      toast.error('Error al eliminar préstamo')
+      console.error('Error eliminando préstamo:', error)
     }
+  }
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }))
   }
 
   const finalizarPrestamo = async (prestamo) => {
@@ -580,7 +600,7 @@ const Prestamos = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(prestamo.id)}
+                          onClick={() => handleDelete(prestamo)}
                           className="text-red-600 hover:text-red-900 p-1"
                         >
                           <Trash2 size={16} />
@@ -604,6 +624,16 @@ const Prestamos = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Users, Plus, Edit, Trash2, Search, UserPlus } from 'lucide-react'
 import { usuariosAPI } from '../services/api'
+import ConfirmationModal from '../components/ui/ConfirmationModal'
 import toast from 'react-hot-toast'
 
 const Usuarios = () => {
@@ -10,6 +11,13 @@ const Usuarios = () => {
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'danger'
+  })
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
 
@@ -72,22 +80,34 @@ const Usuarios = () => {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-      try {
-        // Simulamos eliminación creando un nuevo registro con estado inactivo
-        await usuariosAPI.crear({
-          id: id,
-          estado: 'INACTIVO',
-          eliminado: true
-        })
-        toast.success('Usuario eliminado correctamente')
-        cargarUsuarios()
-      } catch (error) {
-        toast.error('Error al eliminar usuario')
-        console.error('Error eliminando usuario:', error)
-      }
+  const handleDelete = (usuario) => {
+    setModalConfig({
+      isOpen: true,
+      title: '¿Estás seguro?',
+      message: `¿Estás seguro que deseas eliminar al usuario "${usuario.nombre}"? Esta acción no se puede deshacer.`,
+      onConfirm: () => confirmDelete(usuario.id),
+      type: 'danger'
+    })
+  }
+
+  const confirmDelete = async (id) => {
+    try {
+      // Simulamos eliminación creando un nuevo registro con estado inactivo
+      await usuariosAPI.crear({
+        id: id,
+        estado: 'INACTIVO',
+        eliminado: true
+      })
+      toast.success('Usuario eliminado correctamente')
+      cargarUsuarios()
+    } catch (error) {
+      toast.error('Error al eliminar usuario')
+      console.error('Error eliminando usuario:', error)
     }
+  }
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }))
   }
 
   const filteredUsuarios = usuarios.filter(usuario =>
@@ -292,7 +312,7 @@ const Usuarios = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(usuario.id)}
+                          onClick={() => handleDelete(usuario)}
                           className="text-red-600 hover:text-red-900 p-1"
                         >
                           <Trash2 size={16} />
@@ -306,6 +326,16 @@ const Usuarios = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   )
 }

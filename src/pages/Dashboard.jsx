@@ -66,156 +66,223 @@ const Dashboard = () => {
     }
   }
 
-  const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
-    <div className="card">
+
+  const StatCard = ({ title, value, icon: Icon, color, subtitle, index = 0 }) => (
+    <div 
+      className="stat-card group fade-in-up stagger-animation" 
+      style={{ '--stagger': index }}
+    >
       <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+        <div className={`icon-container ${color}`}>
+          <Icon className="h-8 w-8 text-white" />
         </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-eco-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-eco-gray-900">{loading ? '...' : value}</p>
-          {subtitle && <p className="text-sm text-eco-gray-500">{subtitle}</p>}
+        <div className="ml-6">
+          <p className="text-sm font-semibold text-eco-gray-600 uppercase tracking-wide">{title}</p>
+          <div className="mt-1">
+            {loading ? (
+              <div className="loading-skeleton h-8 w-16 rounded"></div>
+            ) : (
+              <p className="text-3xl font-bold text-eco-gray-900 bg-gradient-to-r from-eco-gray-900 to-eco-gray-700 bg-clip-text text-transparent">
+                {value}
+              </p>
+            )}
+          </div>
+          {subtitle && (
+            <p className="text-sm text-eco-gray-500 mt-1 font-medium">{subtitle}</p>
+          )}
         </div>
       </div>
+      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/10 to-transparent rounded-full -mr-10 -mt-10"></div>
     </div>
   )
 
-  const QuickActionCard = ({ title, description, icon: Icon, action, color }) => (
-    <div className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer" onClick={action}>
-      <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+  const QuickActionCard = ({ title, description, icon: Icon, action, color, index = 0 }) => (
+    <div 
+      className="quick-action-card group fade-in-up stagger-animation" 
+      onClick={action}
+      style={{ '--stagger': index + 4 }}
+    >
+      <div className="flex items-center relative z-10">
+        <div className={`icon-container ${color}`}>
+          <Icon className="h-8 w-8 text-white" />
         </div>
-        <div className="ml-4">
-          <h3 className="text-lg font-semibold text-eco-gray-900">{title}</h3>
-          <p className="text-eco-gray-600">{description}</p>
+        <div className="ml-6">
+          <h3 className="text-xl font-bold text-eco-gray-900 group-hover:text-eco-green-700 transition-colors duration-300">
+            {title}
+          </h3>
+          <p className="text-eco-gray-600 group-hover:text-eco-gray-700 transition-colors duration-300 mt-1">
+            {description}
+          </p>
         </div>
       </div>
+      <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-eco-green-100/20 to-transparent rounded-full -mr-8 -mb-8"></div>
     </div>
   )
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-eco-gray-900">Dashboard</h1>
-        <p className="mt-2 text-eco-gray-600">
-          Bienvenido a EcoMove. Gestiona tu plataforma de transporte ecológico.
+      <div className="text-center lg:text-left">
+        <div className="inline-flex items-center space-x-3 mb-4">
+          <div className="p-3 bg-gradient-to-r from-eco-green-500 to-eco-green-600 rounded-2xl shadow-lg">
+            <Leaf className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-eco-gray-900 via-eco-green-700 to-eco-gray-900 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+        </div>
+        <p className="text-lg text-eco-gray-600 max-w-2xl">
+          Bienvenido a <span className="font-semibold text-eco-green-600">EcoMove</span>. 
+          Gestiona tu plataforma de transporte ecológico de manera inteligente y sostenible.
         </p>
       </div>
 
       {/* Estadísticas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Usuarios"
-          value={stats.usuarios}
-          icon={Users}
-          color="bg-blue-500"
-        />
-        <StatCard
-          title="Estaciones"
-          value={stats.estaciones}
-          icon={MapPin}
-          color="bg-eco-green-500"
-        />
-        <StatCard
-          title="Transportes"
-          value={stats.transportes}
-          icon={Truck}
-          color="bg-purple-500"
-        />
-        <StatCard
-          title="Préstamos Activos"
-          value={stats.prestamosActivos}
-          icon={Clock}
-          color="bg-orange-500"
-        />
+      <div>
+        <h2 className="text-2xl font-bold text-eco-gray-900 mb-6 flex items-center">
+          <TrendingUp className="h-6 w-6 mr-3 text-eco-green-600" />
+          Estadísticas Generales
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <StatCard
+            title="Total Usuarios"
+            value={stats.usuarios}
+            icon={Users}
+            color="bg-gradient-to-br from-blue-500 to-blue-600"
+            index={0}
+          />
+          <StatCard
+            title="Estaciones"
+            value={stats.estaciones}
+            icon={MapPin}
+            color="bg-gradient-to-br from-eco-green-500 to-eco-green-600"
+            index={1}
+          />
+          <StatCard
+            title="Transportes"
+            value={stats.transportes}
+            icon={Truck}
+            color="bg-gradient-to-br from-purple-500 to-purple-600"
+            index={2}
+          />
+          <StatCard
+            title="Préstamos Activos"
+            value={stats.prestamosActivos}
+            icon={Clock}
+            color="bg-gradient-to-br from-orange-500 to-orange-600"
+            index={3}
+          />
+        </div>
       </div>
 
       {/* Estadísticas de disponibilidad */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StatCard
-          title="Bicicletas Disponibles"
-          value={stats.bicicletasDisponibles}
-          icon={Bike}
-          color="bg-eco-green-600"
-          subtitle="Listas para préstamo"
-        />
-        <StatCard
-          title="Patinetas Disponibles"
-          value={stats.patinetasDisponibles}
-          icon={Zap}
-          color="bg-yellow-500"
-          subtitle="Listas para préstamo"
-        />
+      <div>
+        <h2 className="text-2xl font-bold text-eco-gray-900 mb-6 flex items-center">
+          <Bike className="h-6 w-6 mr-3 text-eco-green-600" />
+          Disponibilidad de Transportes
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <StatCard
+            title="Bicicletas Disponibles"
+            value={stats.bicicletasDisponibles}
+            icon={Bike}
+            color="bg-gradient-to-br from-eco-green-600 to-eco-green-700"
+            subtitle="Listas para préstamo"
+            index={0}
+          />
+          <StatCard
+            title="Patinetas Disponibles"
+            value={stats.patinetasDisponibles}
+            icon={Zap}
+            color="bg-gradient-to-br from-yellow-500 to-yellow-600"
+            subtitle="Listas para préstamo"
+            index={1}
+          />
+        </div>
       </div>
 
       {/* Acciones rápidas */}
       <div>
-        <h2 className="text-xl font-semibold text-eco-gray-900 mb-4">Acciones Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <h2 className="text-2xl font-bold text-eco-gray-900 mb-6 flex items-center">
+          <Zap className="h-6 w-6 mr-3 text-eco-green-600" />
+          Acciones Rápidas
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <QuickActionCard
             title="Nuevo Usuario"
             description="Registrar un nuevo usuario en el sistema"
             icon={Users}
-            color="bg-blue-500"
+            color="bg-gradient-to-br from-blue-500 to-blue-600"
             action={() => window.location.href = '/usuarios'}
+            index={0}
           />
           <QuickActionCard
             title="Nueva Estación"
             description="Agregar una nueva estación de préstamo"
             icon={MapPin}
-            color="bg-eco-green-500"
+            color="bg-gradient-to-br from-eco-green-500 to-eco-green-600"
             action={() => window.location.href = '/estaciones'}
+            index={1}
           />
           <QuickActionCard
             title="Nuevo Transporte"
             description="Agregar un nuevo medio de transporte"
             icon={Truck}
-            color="bg-purple-500"
+            color="bg-gradient-to-br from-purple-500 to-purple-600"
             action={() => window.location.href = '/transportes'}
+            index={2}
           />
           <QuickActionCard
             title="Nuevo Préstamo"
             description="Crear un nuevo préstamo de transporte"
             icon={Clock}
-            color="bg-orange-500"
+            color="bg-gradient-to-br from-orange-500 to-orange-600"
             action={() => window.location.href = '/prestamos'}
+            index={3}
           />
           <QuickActionCard
             title="Ver Historial"
             description="Consultar historial de préstamos"
             icon={TrendingUp}
-            color="bg-indigo-500"
+            color="bg-gradient-to-br from-indigo-500 to-indigo-600"
             action={() => window.location.href = '/historial'}
+            index={4}
           />
           <QuickActionCard
             title="Gestionar Pagos"
             description="Ver y gestionar pagos del sistema"
             icon={DollarSign}
-            color="bg-green-500"
+            color="bg-gradient-to-br from-green-500 to-green-600"
             action={() => window.location.href = '/pagos'}
+            index={5}
           />
         </div>
       </div>
 
       {/* Información adicional */}
-      <div className="card bg-eco-green-50 border-eco-green-200">
-        <div className="flex items-center">
-          <div className="p-3 rounded-lg bg-eco-green-500">
-            <Leaf className="h-6 w-6 text-white" />
-          </div>
-          <div className="ml-4">
-            <h3 className="text-lg font-semibold text-eco-green-800">
-              EcoMove - Transporte Sostenible
-            </h3>
-            <p className="text-eco-green-700">
-              Contribuyendo a ciudades más limpias y sostenibles a través del transporte ecológico compartido.
-            </p>
+      <div className="relative overflow-hidden bg-gradient-to-br from-eco-green-50 via-white to-eco-green-100 rounded-3xl shadow-xl border border-eco-green-200/50 p-8">
+        <div className="relative z-10">
+          <div className="flex items-center">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-eco-green-500 to-eco-green-600 shadow-lg">
+              <Leaf className="h-8 w-8 text-white" />
+            </div>
+            <div className="ml-6">
+              <h3 className="text-2xl font-bold text-eco-green-800 mb-2">
+                EcoMove - Transporte Sostenible
+              </h3>
+              <p className="text-eco-green-700 text-lg leading-relaxed">
+                Contribuyendo a ciudades más limpias y sostenibles a través del transporte ecológico compartido.
+                <span className="block mt-2 text-eco-green-600 font-medium">
+                  🌱 Menos emisiones • 🚴‍♀️ Más salud • 🌍 Mejor futuro
+                </span>
+              </p>
+            </div>
           </div>
         </div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-eco-green-200/30 to-transparent rounded-full -mr-16 -mt-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-eco-green-300/20 to-transparent rounded-full -ml-12 -mb-12"></div>
       </div>
+
     </div>
   )
 }
