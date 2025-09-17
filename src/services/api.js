@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_BASE_URL = '/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,6 +10,18 @@ const api = axios.create({
   },
   timeout: 30000,
   withCredentials: false
+})
+
+// Interceptor para adjuntar el token en cada request
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  } catch {}
+  return config
 })
 
 // Interceptor para manejar errores
@@ -26,6 +38,7 @@ export const usuariosAPI = {
   crear: (usuario) => api.post('/usuarios', usuario),
   listar: () => api.get('/usuarios'),
   obtenerPorId: (id) => api.get(`/usuarios/${id}`),
+  login: (credenciales) => api.post('/usuarios/login', credenciales),
 }
 
 // Estaciones

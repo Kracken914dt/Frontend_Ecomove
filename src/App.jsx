@@ -8,18 +8,24 @@ import Transportes from './pages/Transportes'
 import Prestamos from './pages/Prestamos'
 import Historial from './pages/Historial'
 import Pagos from './pages/Pagos'
+import Login from './pages/Login'
+import PrivateRoute from './components/auth/PrivateRoute'
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="usuarios" element={<Usuarios />} />
-        <Route path="estaciones" element={<Estaciones />} />
-        <Route path="transportes" element={<Transportes />} />
-        <Route path="prestamos" element={<Prestamos />} />
-        <Route path="historial" element={<Historial />} />
-        {/* <Route path="pagos" element={<Pagos />} /> */}
+      {/* Ruta pública de login sin el Layout */}
+      <Route path="/login" element={<Login />} />
+      <Route element={<PrivateRoute />}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="usuarios" element={<Usuarios />} />
+          <Route path="estaciones" element={<Estaciones />} />
+          <Route path="transportes" element={<Transportes />} />
+          <Route path="prestamos" element={<Prestamos />} />
+          <Route path="historial" element={<Historial />} />
+          {/* <Route path="pagos" element={<Pagos />} /> */}
+        </Route>
       </Route>
     </Routes>
   )

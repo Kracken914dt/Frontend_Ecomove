@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   Leaf, 
   Search, 
@@ -17,10 +17,18 @@ import {
   LogOut,
   User
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout, user } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   const navigation = [
     { 
@@ -33,19 +41,22 @@ const Layout = () => {
       name: 'Usuarios', 
       href: '/usuarios', 
       icon: Users, 
-      description: 'Gestión de usuarios'
+      description: 'Gestión de usuarios',
+      requiredRoles: ['ADMIN']
     },
     { 
       name: 'Estaciones', 
       href: '/estaciones', 
       icon: MapPin, 
-      description: 'Administrar estaciones'
+      description: 'Administrar estaciones',
+      requiredRoles: ['ADMIN']
     },
     { 
       name: 'Transportes', 
       href: '/transportes', 
       icon: Truck, 
-      description: 'Gestionar transportes'
+      description: 'Gestionar transportes',
+      requiredRoles: ['ADMIN']
     },
     { 
       name: 'Préstamos', 
@@ -68,6 +79,12 @@ const Layout = () => {
   ]
 
   const isActive = (path) => location.pathname === path
+
+  const hasAccess = (item) => {
+    if (!item.requiredRoles || item.requiredRoles.length === 0) return true
+    if (!user?.tipo) return false
+    return item.requiredRoles.includes(user.tipo)
+  }
 
   return (
     <div className="min-h-screen h-screen bg-eco-gray-50 flex flex-col overflow-hidden">
@@ -98,7 +115,9 @@ const Layout = () => {
                 <div className="h-8 w-8 rounded-full bg-eco-green-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-eco-green-400">
                   <User size={16} className="text-white" />
                 </div>
-                <span className="hidden sm:inline text-sm font-medium transition-all duration-300 group-hover:text-eco-green-300">Admin</span>
+                <span className="hidden sm:inline text-sm font-medium transition-all duration-300 group-hover:text-eco-green-300">
+                  {user?.nombre || user?.correo || 'Usuario'}
+                </span>
               </div>
             </div>
           </div>
@@ -124,7 +143,7 @@ const Layout = () => {
             {/* Navegación principal */}
             <nav className="flex-1 px-4 py-6">
               <ul className="space-y-2">
-                {navigation.map((item) => {
+                {navigation.filter(hasAccess).map((item) => {
                   const Icon = item.icon
                   const isActiveRoute = isActive(item.href)
                   return (
@@ -165,7 +184,7 @@ const Layout = () => {
                   <Settings size={18} className="mr-3 transition-transform duration-300 group-hover:rotate-45" />
                   <span className="font-medium">Configuración</span>
                 </button>
-                <button className="w-full flex items-center px-4 py-3 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-md">
+                <button onClick={handleLogout} className="w-full flex items-center px-4 py-3 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-md">
                   <LogOut size={18} className="mr-3 transition-transform duration-300 group-hover:-translate-x-1" />
                   <span className="font-medium">Cerrar Sesión</span>
                 </button>
