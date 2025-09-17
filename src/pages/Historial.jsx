@@ -313,7 +313,7 @@ useEffect(() => {
               </thead>
               <tbody className="bg-white divide-y divide-eco-gray-200">
                 {filteredPrestamos.map((prestamo) => (
-                  <tr key={prestamo.id} className="hover:bg-eco-gray-50">
+                  <tr key={`${prestamo.id}-${prestamo.usuarioId || 'u'}`} className="hover:bg-eco-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-lg bg-eco-green-100 flex items-center justify-center">

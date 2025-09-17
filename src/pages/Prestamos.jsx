@@ -70,7 +70,11 @@ const Prestamos = () => {
       const prestamosPromesas = usuariosActivos.map(usuario =>
         prestamosAPI.historialPorUsuario(usuario.id)
           .then(response => {
-            return response.data.map(prestamo => ({
+            const raw = response?.data
+            const list = Array.isArray(raw)
+              ? raw
+              : (Array.isArray(raw?.data) ? raw.data : [])
+            return list.map(prestamo => ({
               ...prestamo,
               usuario: usuariosActivos.find(u => u.id === prestamo.usuarioId) || { nombre: 'Usuario no encontrado' },
               transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
