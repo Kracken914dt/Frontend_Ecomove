@@ -10,12 +10,15 @@ import Historial from './pages/Historial'
 import Pagos from './pages/Pagos'
 import Login from './pages/Login'
 import PrivateRoute from './components/auth/PrivateRoute'
+import PagosCallback from './pages/PagosCallback'
 
 function App() {
   return (
     <Routes>
       {/* Ruta pública de login sin el Layout */}
       <Route path="/login" element={<Login />} />
+      {/* Ruta pública para callback de Stripe */}
+      <Route path="/pagos/callback" element={<PagosCallback />} />
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />

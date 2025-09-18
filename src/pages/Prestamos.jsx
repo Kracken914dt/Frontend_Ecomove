@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Clock, Plus, Edit, Trash2, Search, User, MapPin, Truck, CreditCard, Eye } from 'lucide-react'
-import { prestamosAPI, usuariosAPI, transportesAPI, estacionesAPI } from '../services/api'
+import { prestamosAPI, usuariosAPI, transportesAPI, estacionesAPI, pagosAPI } from '../services/api'
 import ConfirmationModal from '../components/ui/ConfirmationModal'
 import toast from 'react-hot-toast'
 
@@ -24,7 +24,7 @@ const Prestamos = () => {
     type: 'danger'
   })
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm()
+  const { register, handleSubmit, reset, formState: { errors }, getValues, setValue } = useForm()
 
   useEffect(() => {
     cargarDatos()
@@ -149,6 +149,41 @@ const Prestamos = () => {
           estado: 'EN_CURSO'
         })
 
+        // 7. Iniciar pago simple con Stripe Checkout y redirigir
+        try {
+          const checkoutPayload = {
+            usuarioId: data.usuarioId,
+            transporteId: data.transporteId,
+            monto: Number(data.costo || 0),
+          }
+          const checkoutRes = await pagosAPI.checkoutStripe(checkoutPayload)
+          console.log('Checkout response:', checkoutRes)
+          const dataRes = checkoutRes?.data
+          let url = null
+          if (typeof dataRes === 'string') url = dataRes
+          else if (typeof dataRes?.url === 'string') url = dataRes.url
+          else if (typeof dataRes?.checkoutUrl === 'string') url = dataRes.checkoutUrl
+          else if (typeof dataRes?.redirectUrl === 'string') url = dataRes.redirectUrl
+          else if (typeof dataRes?.data?.url === 'string') url = dataRes.data.url
+          else if (checkoutRes?.headers?.location) url = checkoutRes.headers.location
+
+          if (url) {
+            try {
+              window.location.assign(url)
+            } catch (e) {
+              window.open(url, '_self')
+            }
+            return
+          } else {
+            console.error('Forma de respuesta de checkout no reconocida:', checkoutRes)
+            toast.error('No se recibió URL de Checkout')
+          }
+        } catch (err) {
+          const msg = err?.response?.data?.message || 'Error iniciando pago'
+          toast.error(msg)
+        }
+
+        // Si no se redirige, continuar flujo normal
         toast.success('Préstamo creado correctamente')
         reset()
         setShowForm(false)
