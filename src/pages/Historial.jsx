@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Clock, Search, Filter, Calendar, User, MapPin, Truck, DollarSign, Eye } from 'lucide-react'
+import { Clock, Search, Filter, Calendar, User, MapPin, DollarSign, Eye, Bike } from 'lucide-react'
+import { MdOutlineElectricScooter as ScooterIcon } from 'react-icons/md'
 import { prestamosAPI, usuariosAPI, transportesAPI, estacionesAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
@@ -123,14 +124,8 @@ useEffect(() => {
   }
 
   const getTipoIcon = (tipo) => {
-    switch (tipo) {
-      case 'BICICLETA':
-        return <Truck className="h-4 w-4" />
-      case 'PATINETA':
-        return <Truck className="h-4 w-4" />
-      default:
-        return <Truck className="h-4 w-4" />
-    }
+    if (tipo === 'PATINETA' || tipo === 'SCOOTER') return <ScooterIcon className="h-4 w-4" />
+    return <Bike className="h-4 w-4" />
   }
 
   const filteredPrestamos = prestamos.filter(prestamo => {

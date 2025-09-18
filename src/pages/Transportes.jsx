@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Truck, Plus, Edit, Trash2, Search, Bike, Zap, MapPin } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Bike, Zap, MapPin } from 'lucide-react'
+import { MdOutlineElectricScooter as ScooterIcon } from 'react-icons/md'
 import { transportesAPI, estacionesAPI } from '../services/api'
 import ConfirmationModal from '../components/ui/ConfirmationModal'
 import toast from 'react-hot-toast'
@@ -155,10 +156,10 @@ const Transportes = () => {
     switch (tipo) {
       case 'BICICLETA':
         return <Bike className="h-5 w-5" />
-      case 'PATINETA':
-        return <Zap className="h-5 w-5" />
+      case 'SCOOTER':
+        return <ScooterIcon className="h-5 w-5" />
       default:
-        return <Truck className="h-5 w-5" />
+        return <Bike className="h-5 w-5" />
     }
   }
 
@@ -291,7 +292,7 @@ const Transportes = () => {
           </div>
         ) : filteredTransportes.length === 0 ? (
           <div className="text-center py-8">
-            <Truck className="mx-auto h-12 w-12 text-eco-gray-400" />
+            <ScooterIcon className="mx-auto h-12 w-12 text-eco-gray-400" />
             <p className="mt-2 text-eco-gray-600">
               {searchTerm ? 'No se encontraron transportes que coincidan con la búsqueda' : 'No hay transportes registrados'}
             </p>

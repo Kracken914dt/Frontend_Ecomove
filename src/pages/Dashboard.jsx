@@ -155,13 +155,15 @@ const Dashboard = () => {
           Estadísticas Generales
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <StatCard
-            title="Total Usuarios"
-            value={stats.usuarios}
-            icon={Users}
-            color="bg-gradient-to-br from-blue-500 to-blue-600"
-            index={0}
-          />
+          {isAdmin && (
+            <StatCard
+              title="Total Usuarios"
+              value={stats.usuarios}
+              icon={Users}
+              color="bg-gradient-to-br from-blue-500 to-blue-600"
+              index={0}
+            />
+          )}
           <StatCard
             title="Estaciones"
             value={stats.estaciones}

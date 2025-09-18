@@ -13,6 +13,7 @@ import { estacionesAPI, transportesAPI } from "../services/api";
 import ConfirmationModal from "../components/ui/ConfirmationModal";
 import toast from "react-hot-toast";
 import MapaModal from "../components/MapaModal";
+import { useAuth } from "../context/AuthContext";
 
 const Estaciones = () => {
   const [estaciones, setEstaciones] = useState([]);
@@ -37,6 +38,10 @@ const Estaciones = () => {
     reset,
     formState: { errors },
   } = useForm();
+
+  const { user } = useAuth();
+  const isAdmin = user?.tipo === 'ADMIN';
+  const isUsuario = user?.tipo === 'USUARIO';
 
   useEffect(() => {
     cargarEstaciones();
@@ -82,6 +87,10 @@ const Estaciones = () => {
 
   const onSubmit = async (data) => {
     try {
+      if (!isAdmin) {
+        toast.error('No autorizado');
+        return;
+      }
       // Validar que los transportes seleccionados no estén asignados a otras estaciones
       const transportesSeleccionados = Array.isArray(data.transportes)
         ? data.transportes
@@ -132,6 +141,10 @@ const Estaciones = () => {
 
   const handleEdit = async (estacion) => {
     try {
+      if (!isAdmin) {
+        toast.error('No autorizado');
+        return;
+      }
       const response = await estacionesAPI.obtenerPorId(estacion.id);
       const estacionCompleta = response.data;
       setEditingStation(estacionCompleta);
@@ -144,6 +157,10 @@ const Estaciones = () => {
   };
 
   const handleDelete = (estacion) => {
+    if (!isAdmin) {
+      toast.error('No autorizado');
+      return;
+    }
     setModalConfig({
       isOpen: true,
       title: '¿Estás seguro?',
@@ -155,6 +172,10 @@ const Estaciones = () => {
 
   const confirmDelete = async (id) => {
     try {
+      if (!isAdmin) {
+        toast.error('No autorizado');
+        return;
+      }
       // Simulamos eliminación creando un nuevo registro con estado inactivo
       await estacionesAPI.crear({
         id: id,
@@ -187,26 +208,31 @@ const Estaciones = () => {
               🏢 Gestión de Estaciones
             </h1>
             <p className="text-eco-green-100 text-lg">
-              Administra las estaciones de préstamo de transporte ecológico de
-              EcoMove
+              {isAdmin ? (
+                <>Administra las estaciones de préstamo de transporte ecológico de EcoMove</>
+              ) : (
+                <>Consulta las estaciones y su disponibilidad en EcoMove</>
+              )}
             </p>
           </div>
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setEditingStation(null);
-              reset();
-            }}
-            className="bg-white text-eco-green-700 hover:bg-eco-green-50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 mt-6 lg:mt-0 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
-          >
-            <Plus size={24} />
-            <span>Nueva Estación</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setShowForm(true);
+                setEditingStation(null);
+                reset();
+              }}
+              className="bg-white text-eco-green-700 hover:bg-eco-green-50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 mt-6 lg:mt-0 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              <Plus size={24} />
+              <span>Nueva Estación</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Formulario mejorado */}
-      {showForm && (
+      {showForm && isAdmin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between mb-6">
@@ -404,7 +430,7 @@ const Estaciones = () => {
                 ? "Intenta con otros términos de búsqueda"
                 : "Comienza creando tu primera estación para gestionar transportes ecológicos"}
             </p>
-            {!searchTerm && (
+            {isAdmin && !searchTerm && (
               <button
                 onClick={() => {
                   setShowForm(true);
@@ -439,20 +465,22 @@ const Estaciones = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(estacion)}
-                        className="p-2 text-eco-green-600 hover:text-eco-green-800 hover:bg-eco-green-100 rounded-lg transition-colors duration-200"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(estacion)}
-                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-colors duration-200"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(estacion)}
+                          className="p-2 text-eco-green-600 hover:text-eco-green-800 hover:bg-eco-green-100 rounded-lg transition-colors duration-200"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(estacion)}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-colors duration-200"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-3">

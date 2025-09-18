@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Clock, Plus, Edit, Trash2, Search, User, MapPin, Truck, CreditCard, Eye } from 'lucide-react'
+import { Clock, Plus, Edit, Trash2, Search, User, MapPin, Bike, Zap, CreditCard, Eye } from 'lucide-react'
+import { MdOutlineElectricScooter as ScooterIcon } from 'react-icons/md'
 import { prestamosAPI, usuariosAPI, transportesAPI, estacionesAPI, pagosAPI } from '../services/api'
 import ConfirmationModal from '../components/ui/ConfirmationModal'
 import toast from 'react-hot-toast'
+import { useAuth } from '../context/AuthContext'
 
 const Prestamos = () => {
   const [prestamos, setPrestamos] = useState([])
@@ -25,6 +27,9 @@ const Prestamos = () => {
   })
 
   const { register, handleSubmit, reset, formState: { errors }, getValues, setValue } = useForm()
+  const { user } = useAuth()
+  const isAdmin = user?.tipo === 'ADMIN'
+  const isUsuario = user?.tipo === 'USUARIO'
 
   useEffect(() => {
     cargarDatos()
@@ -33,64 +38,91 @@ const Prestamos = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true)
-      
-      const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
-        usuariosAPI.listar(),
-        transportesAPI.listar(),
-        estacionesAPI.listar()
-      ])
+      if (isUsuario) {
+        // Cargar solo datos necesarios para el usuario actual
+        const [transportesRes, estacionesRes, prestamosRes] = await Promise.all([
+          transportesAPI.listar(),
+          estacionesAPI.listar(),
+          prestamosAPI.historialPorUsuario(user.id).catch(() => ({ data: [] }))
+        ])
 
-      // Filtrar usuarios activos
-      const usuariosActivos = usuariosRes.data.filter(
-        usuario => usuario.nombre && usuario.correo && usuario.documento
-      )
-      setUsuarios(usuariosActivos)
+        const transportesActivos = transportesRes.data.filter(t => Object.keys(t).length > 1)
+        const estacionesActivas = estacionesRes.data.filter(e => Object.keys(e).length > 1)
+        const transportesMap = transportesActivos.reduce((m, t) => { m[t.id] = t; return m }, {})
+        const estacionesMap = estacionesActivas.reduce((m, e) => { m[e.id] = e; return m }, {})
 
-      // Filtrar transportes y crear mapa
-      const transportesActivos = transportesRes.data.filter(
-        transporte => Object.keys(transporte).length > 1
-      )
-      const transportesMap = transportesActivos.reduce((map, t) => {
-        map[t.id] = t
-        return map
-      }, {})
-      setTransportes(transportesActivos)
+        const raw = prestamosRes?.data
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
 
-      // Filtrar estaciones y crear mapa
-      const estacionesActivas = estacionesRes.data.filter(
-        estacion => Object.keys(estacion).length > 1
-      )
-      const estacionesMap = estacionesActivas.reduce((map, e) => {
-        map[e.id] = e
-        return map
-      }, {})
-      setEstaciones(estacionesActivas)
+        setUsuarios([user])
+        setTransportes(transportesActivos)
+        setEstaciones(estacionesActivas)
+        setPrestamos(list.map(prestamo => ({
+          ...prestamo,
+          usuario: { id: user.id, nombre: user.nombre },
+          transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
+          estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
+          estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
+        })))
+      } else {
+        const [usuariosRes, transportesRes, estacionesRes] = await Promise.all([
+          usuariosAPI.listar(),
+          transportesAPI.listar(),
+          estacionesAPI.listar()
+        ])
 
-      // Obtener préstamos con información relacionada
-      const prestamosPromesas = usuariosActivos.map(usuario =>
-        prestamosAPI.historialPorUsuario(usuario.id)
-          .then(response => {
-            const raw = response?.data
-            const list = Array.isArray(raw)
-              ? raw
-              : (Array.isArray(raw?.data) ? raw.data : [])
-            return list.map(prestamo => ({
-              ...prestamo,
-              usuario: usuariosActivos.find(u => u.id === prestamo.usuarioId) || { nombre: 'Usuario no encontrado' },
-              transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
-              estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
-              estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
-            }))
-          })
-          .catch(error => {
-            console.error(`Error obteniendo préstamos del usuario ${usuario.id}:`, error)
-            return []
-          })
-      )
+        // Filtrar usuarios activos
+        const usuariosActivos = usuariosRes.data.filter(
+          usuario => usuario.nombre && usuario.correo && usuario.documento
+        )
+        setUsuarios(usuariosActivos)
 
-      const prestamosPorUsuario = await Promise.all(prestamosPromesas)
-      const todosLosPrestamos = prestamosPorUsuario.flat()
-      setPrestamos(todosLosPrestamos)
+        // Filtrar transportes y crear mapa
+        const transportesActivos = transportesRes.data.filter(
+          transporte => Object.keys(transporte).length > 1
+        )
+        const transportesMap = transportesActivos.reduce((map, t) => {
+          map[t.id] = t
+          return map
+        }, {})
+        setTransportes(transportesActivos)
+
+        // Filtrar estaciones y crear mapa
+        const estacionesActivas = estacionesRes.data.filter(
+          estacion => Object.keys(estacion).length > 1
+        )
+        const estacionesMap = estacionesActivas.reduce((map, e) => {
+          map[e.id] = e
+          return map
+        }, {})
+        setEstaciones(estacionesActivas)
+
+        // Obtener préstamos con información relacionada
+        const prestamosPromesas = usuariosActivos.map(usuario =>
+          prestamosAPI.historialPorUsuario(usuario.id)
+            .then(response => {
+              const raw = response?.data
+              const list = Array.isArray(raw)
+                ? raw
+                : (Array.isArray(raw?.data) ? raw.data : [])
+              return list.map(prestamo => ({
+                ...prestamo,
+                usuario: usuariosActivos.find(u => u.id === prestamo.usuarioId) || { nombre: 'Usuario no encontrado' },
+                transporte: transportesMap[prestamo.transporteId] || { tipo: 'Sin tipo' },
+                estacionOrigen: estacionesMap[prestamo.estacionOrigenId] || { nombre: 'Origen' },
+                estacionDestino: estacionesMap[prestamo.estacionDestinoId] || { nombre: 'Destino' }
+              }))
+            })
+            .catch(error => {
+              console.error(`Error obteniendo préstamos del usuario ${usuario.id}:`, error)
+              return []
+            })
+        )
+
+        const prestamosPorUsuario = await Promise.all(prestamosPromesas)
+        const todosLosPrestamos = prestamosPorUsuario.flat()
+        setPrestamos(todosLosPrestamos)
+      }
       
     } catch (error) {
       toast.error('Error al cargar datos')
@@ -155,6 +187,7 @@ const Prestamos = () => {
             usuarioId: data.usuarioId,
             transporteId: data.transporteId,
             monto: Number(data.costo || 0),
+            currency: 'usd',
           }
           const checkoutRes = await pagosAPI.checkoutStripe(checkoutPayload)
           console.log('Checkout response:', checkoutRes)
@@ -285,10 +318,12 @@ const Prestamos = () => {
     }
   }
 
-  const filteredPrestamos = prestamos.filter(prestamo =>
-    prestamo.id?.toString().includes(searchTerm) ||
-    prestamo.usuario?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredPrestamos = prestamos
+    .filter(prestamo => (isUsuario ? prestamo.usuarioId === user?.id : true))
+    .filter(prestamo =>
+      prestamo.id?.toString().includes(searchTerm) ||
+      prestamo.usuario?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
   const transportesDisponibles = transportes.filter(t => t.estado === 'DISPONIBLE')
 
@@ -299,7 +334,7 @@ const Prestamos = () => {
         <div>
           <h1 className="text-3xl font-bold text-eco-gray-900">Gestión de Préstamos</h1>
           <p className="mt-2 text-eco-gray-600">
-            Administra los préstamos de transporte ecológico
+            {isUsuario ? 'Solicita y revisa tus préstamos de transporte ecológico' : 'Administra los préstamos de transporte ecológico'}
           </p>
         </div>
         <button
@@ -311,7 +346,7 @@ const Prestamos = () => {
           className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
         >
           <Plus size={20} />
-          <span>Nuevo Préstamo</span>
+          <span>{isUsuario ? 'Solicitar Préstamo' : 'Nuevo Préstamo'}</span>
         </button>
       </div>
 
@@ -336,29 +371,37 @@ const Prestamos = () => {
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  Usuario
-                </label>
-                <select
-                  {...register('usuarioId', { required: 'El usuario es requerido' })}
-                  className="input-field"
-                  onChange={(e) => {
-                    const user = usuarios.find(u => u.id == e.target.value)
-                    setSelectedUser(user)
-                  }}
-                >
-                  <option value="">Seleccionar usuario</option>
-                  {usuarios.map(usuario => (
-                    <option key={usuario.id} value={usuario.id}>
-                      {usuario.nombre} - {usuario.documento}
-                    </option>
-                  ))}
-                </select>
-                {errors.usuarioId && (
-                  <p className="text-red-500 text-sm mt-1">{errors.usuarioId.message}</p>
-                )}
-              </div>
+              {isUsuario ? (
+                <div>
+                  <label className="block text-sm font-medium text-eco-gray-700 mb-2">Usuario</label>
+                  <input type="text" value={user?.nombre || user?.correo || 'Usuario'} className="input-field" disabled />
+                  <input type="hidden" value={user?.id} {...register('usuarioId', { required: true })} />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-eco-gray-700 mb-2">
+                    Usuario
+                  </label>
+                  <select
+                    {...register('usuarioId', { required: 'El usuario es requerido' })}
+                    className="input-field"
+                    onChange={(e) => {
+                      const userSel = usuarios.find(u => u.id == e.target.value)
+                      setSelectedUser(userSel)
+                    }}
+                  >
+                    <option value="">Seleccionar usuario</option>
+                    {usuarios.map(usuario => (
+                      <option key={usuario.id} value={usuario.id}>
+                        {usuario.nombre} - {usuario.documento}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.usuarioId && (
+                    <p className="text-red-500 text-sm mt-1">{errors.usuarioId.message}</p>
+                  )}
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-medium text-eco-gray-700 mb-2">
@@ -489,17 +532,19 @@ const Prestamos = () => {
                 )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
-                  ID del pago asociado
-                </label>
-                <input
-                  type="number"
-                  {...register('pagoId')}
-                  className="input-field"
-                  placeholder="Opcional"
-                />
-              </div>
+              {!isUsuario && (
+                <div>
+                  <label className="block text-sm font-medium text-eco-gray-700 mb-2">
+                    ID del pago asociado
+                  </label>
+                  <input
+                    type="number"
+                    {...register('pagoId')}
+                    className="input-field"
+                    placeholder="Opcional"
+                  />
+                </div>
+              )}
             </div>
             
             <div className="flex justify-end space-x-3">
@@ -605,7 +650,11 @@ const Prestamos = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <Truck className="h-4 w-4 text-eco-gray-400 mr-2" />
+                        {(prestamo.transporte?.tipo === 'PATINETA') ? (
+                          <ScooterIcon className="h-4 w-4 text-eco-gray-400 mr-2" />
+                        ) : (
+                          <Bike className="h-4 w-4 text-eco-gray-400 mr-2" />
+                        )}
                         <span className="text-sm text-eco-gray-900">
                           {prestamo.transporte?.tipo || 'Sin tipo'}
                         </span>
@@ -632,18 +681,22 @@ const Prestamos = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEdit(prestamo)}
-                          className="text-eco-green-600 hover:text-eco-green-900 p-1"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(prestamo)}
-                          className="text-red-600 hover:text-red-900 p-1"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {!isUsuario && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(prestamo)}
+                              className="text-eco-green-600 hover:text-eco-green-900 p-1"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(prestamo)}
+                              className="text-red-600 hover:text-red-900 p-1"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
                         {/* Botón de finalizar solo aparece si el transporte está EN_USO */}
                         {prestamo.transporte?.estado === 'EN_USO' && (
                           <button
