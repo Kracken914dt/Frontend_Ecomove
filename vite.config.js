@@ -9,8 +9,9 @@ export default defineConfig({
     proxy: {
       '/api': {
         //target: 'https://ecomove-v1.onrender.com',
-        target: 'http://localhost:8080',
+        //target: 'http://localhost:8080',
         //target:'https://ecomove.onrender.com',
+        target: 'https://ecomovesolid.onrender.com',
         changeOrigin: true,
         secure: false,
       }
