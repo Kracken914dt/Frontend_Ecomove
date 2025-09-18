@@ -12,8 +12,12 @@ import {
 } from 'lucide-react'
 import { estacionesAPI, transportesAPI, prestamosAPI, usuariosAPI } from '../services/api'
 import toast from 'react-hot-toast'
+import { useAuth } from '../context/AuthContext'
 
 const Dashboard = () => {
+  const { user } = useAuth()
+  const isAdmin = user?.tipo === 'ADMIN'
+  const isUsuario = user?.tipo === 'USUARIO'
   const [stats, setStats] = useState({
     usuarios: 0,
     estaciones: 0,
@@ -131,10 +135,17 @@ const Dashboard = () => {
             Dashboard
           </h1>
         </div>
-        <p className="text-lg text-eco-gray-600 max-w-2xl">
-          Bienvenido a <span className="font-semibold text-eco-green-600">EcoMove</span>. 
-          Gestiona tu plataforma de transporte ecológico de manera inteligente y sostenible.
-        </p>
+        {isAdmin ? (
+          <p className="text-lg text-eco-gray-600 max-w-2xl">
+            Bienvenido a <span className="font-semibold text-eco-green-600">EcoMove</span>.
+            Gestiona tu plataforma de transporte ecológico de manera inteligente y sostenible.
+          </p>
+        ) : (
+          <p className="text-lg text-eco-gray-600 max-w-2xl">
+            Bienvenido a <span className="font-semibold text-eco-green-600">EcoMove</span>.
+            Aquí podrás consultar la disponibilidad de vehículos y revisar tus préstamos e historial.
+          </p>
+        )}
       </div>
 
       {/* Estadísticas principales */}
@@ -201,63 +212,65 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Acciones rápidas */}
-      <div>
-        <h2 className="text-2xl font-bold text-eco-gray-900 mb-6 flex items-center">
-          <Zap className="h-6 w-6 mr-3 text-eco-green-600" />
-          Acciones Rápidas
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <QuickActionCard
-            title="Nuevo Usuario"
-            description="Registrar un nuevo usuario en el sistema"
-            icon={Users}
-            color="bg-gradient-to-br from-blue-500 to-blue-600"
-            action={() => window.location.href = '/usuarios'}
-            index={0}
-          />
-          <QuickActionCard
-            title="Nueva Estación"
-            description="Agregar una nueva estación de préstamo"
-            icon={MapPin}
-            color="bg-gradient-to-br from-eco-green-500 to-eco-green-600"
-            action={() => window.location.href = '/estaciones'}
-            index={1}
-          />
-          <QuickActionCard
-            title="Nuevo Transporte"
-            description="Agregar un nuevo medio de transporte"
-            icon={Truck}
-            color="bg-gradient-to-br from-purple-500 to-purple-600"
-            action={() => window.location.href = '/transportes'}
-            index={2}
-          />
-          <QuickActionCard
-            title="Nuevo Préstamo"
-            description="Crear un nuevo préstamo de transporte"
-            icon={Clock}
-            color="bg-gradient-to-br from-orange-500 to-orange-600"
-            action={() => window.location.href = '/prestamos'}
-            index={3}
-          />
-          <QuickActionCard
-            title="Ver Historial"
-            description="Consultar historial de préstamos"
-            icon={TrendingUp}
-            color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-            action={() => window.location.href = '/historial'}
-            index={4}
-          />
-          <QuickActionCard
-            title="Gestionar Pagos"
-            description="Ver y gestionar pagos del sistema"
-            icon={DollarSign}
-            color="bg-gradient-to-br from-green-500 to-green-600"
-            action={() => window.location.href = '/pagos'}
-            index={5}
-          />
+      {/* Acciones rápidas: solo administradores */}
+      {isAdmin && (
+        <div>
+          <h2 className="text-2xl font-bold text-eco-gray-900 mb-6 flex items-center">
+            <Zap className="h-6 w-6 mr-3 text-eco-green-600" />
+            Acciones Rápidas
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <QuickActionCard
+              title="Nuevo Usuario"
+              description="Registrar un nuevo usuario en el sistema"
+              icon={Users}
+              color="bg-gradient-to-br from-blue-500 to-blue-600"
+              action={() => window.location.href = '/usuarios'}
+              index={0}
+            />
+            <QuickActionCard
+              title="Nueva Estación"
+              description="Agregar una nueva estación de préstamo"
+              icon={MapPin}
+              color="bg-gradient-to-br from-eco-green-500 to-eco-green-600"
+              action={() => window.location.href = '/estaciones'}
+              index={1}
+            />
+            <QuickActionCard
+              title="Nuevo Transporte"
+              description="Agregar un nuevo medio de transporte"
+              icon={Truck}
+              color="bg-gradient-to-br from-purple-500 to-purple-600"
+              action={() => window.location.href = '/transportes'}
+              index={2}
+            />
+            <QuickActionCard
+              title="Nuevo Préstamo"
+              description="Crear un nuevo préstamo de transporte"
+              icon={Clock}
+              color="bg-gradient-to-br from-orange-500 to-orange-600"
+              action={() => window.location.href = '/prestamos'}
+              index={3}
+            />
+            <QuickActionCard
+              title="Ver Historial"
+              description="Consultar historial de préstamos"
+              icon={TrendingUp}
+              color="bg-gradient-to-br from-indigo-500 to-indigo-600"
+              action={() => window.location.href = '/historial'}
+              index={4}
+            />
+            <QuickActionCard
+              title="Gestionar Pagos"
+              description="Ver y gestionar pagos del sistema"
+              icon={DollarSign}
+              color="bg-gradient-to-br from-green-500 to-green-600"
+              action={() => window.location.href = '/pagos'}
+              index={5}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Información adicional */}
       <div className="relative overflow-hidden bg-gradient-to-br from-eco-green-50 via-white to-eco-green-100 rounded-3xl shadow-xl border border-eco-green-200/50 p-8">

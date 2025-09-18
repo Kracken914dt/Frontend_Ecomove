@@ -8,6 +8,7 @@ import Transportes from './pages/Transportes'
 import Prestamos from './pages/Prestamos'
 import Historial from './pages/Historial'
 import Pagos from './pages/Pagos'
+import MisPrestamos from './pages/MisPrestamos'
 import Login from './pages/Login'
 import PrivateRoute from './components/auth/PrivateRoute'
 import PagosCallback from './pages/PagosCallback'
@@ -27,6 +28,7 @@ function App() {
           <Route path="transportes" element={<Transportes />} />
           <Route path="prestamos" element={<Prestamos />} />
           <Route path="historial" element={<Historial />} />
+          <Route path="mis-prestamos" element={<MisPrestamos />} />
           {/* <Route path="pagos" element={<Pagos />} /> */}
         </Route>
       </Route>

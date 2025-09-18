@@ -37,6 +37,13 @@ const Layout = () => {
       icon: Home, 
       description: 'Vista general del sistema'
     },
+    {
+      name: 'Mis Préstamos',
+      href: '/mis-prestamos',
+      icon: User,
+      description: 'Tus préstamos e historial',
+      requiredRoles: ['USUARIO']
+    },
     { 
       name: 'Usuarios', 
       href: '/usuarios', 
@@ -49,7 +56,6 @@ const Layout = () => {
       href: '/estaciones', 
       icon: MapPin, 
       description: 'Administrar estaciones',
-      requiredRoles: ['ADMIN']
     },
     { 
       name: 'Transportes', 
@@ -68,7 +74,8 @@ const Layout = () => {
       name: 'Historial', 
       href: '/historial', 
       icon: BarChart3, 
-      description: 'Historial de préstamos'
+      description: 'Historial de préstamos',
+      requiredRoles: ['ADMIN']
     },
     //{ 
       //name: 'Pagos', 
