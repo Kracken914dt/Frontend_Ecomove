@@ -224,6 +224,7 @@ const Transportes = () => {
                   <option value="">Seleccionar tipo</option>
                   <option value="BICICLETA">Bicicleta</option>
                   <option value="SCOOTER">Scooter</option>
+                  <option value="MOTO ELECTRICA">Moto electrica</option>
                 </select>
                 {errors.tipo && (
                   <p className="text-red-500 text-sm mt-1">{errors.tipo.message}</p>

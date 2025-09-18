@@ -115,7 +115,8 @@ const Estaciones = () => {
 
       const estacionData = {
         ...data,
-        capacidad: parseInt(data.capacidad),
+        // Capacidad se asocia automáticamente al número de vehículos asignados
+        capacidad: transportesSeleccionados.length,
         transportes: transportesSeleccionados,
       };
 
@@ -272,28 +273,6 @@ const Estaciones = () => {
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-eco-gray-700 mb-3">
-                    🚗 Capacidad total *
-                  </label>
-                  <input
-                    type="number"
-                    {...register("capacidad", {
-                      required: "La capacidad es requerida",
-                      min: {
-                        value: 1,
-                        message: "La capacidad debe ser mayor a 0",
-                      },
-                    })}
-                    className="w-full px-4 py-3 border border-eco-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-eco-green-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Número de espacios disponibles"
-                  />
-                  {errors.capacidad && (
-                    <p className="text-red-500 text-sm mt-2">
-                      {errors.capacidad.message}
-                    </p>
-                  )}
-                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -491,17 +470,11 @@ const Estaciones = () => {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-eco-green-100 rounded-lg">
-                        <p className="text-xs text-eco-gray-600">Capacidad</p>
-                        <p className="text-lg font-bold text-eco-green-700">
-                          {estacion.capacidad || 0}
-                        </p>
-                      </div>
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="text-center p-3 bg-blue-100 rounded-lg">
                         <p className="text-xs text-eco-gray-600">Disponibles</p>
                         <p className="text-lg font-bold text-blue-700">
-                          {estacion.capacidad || 0}
+                          {(estacion.transportes && Array.isArray(estacion.transportes)) ? estacion.transportes.length : 0}
                         </p>
                       </div>
                     </div>

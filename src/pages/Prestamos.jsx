@@ -337,21 +337,23 @@ const Prestamos = () => {
             {isUsuario ? 'Solicita y revisa tus préstamos de transporte ecológico' : 'Administra los préstamos de transporte ecológico'}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowForm(true)
-            setEditingLoan(null)
-            reset()
-          }}
-          className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
-        >
-          <Plus size={20} />
-          <span>{isUsuario ? 'Solicitar Préstamo' : 'Nuevo Préstamo'}</span>
-        </button>
+        {isUsuario && (
+          <button
+            onClick={() => {
+              setShowForm(true)
+              setEditingLoan(null)
+              reset()
+            }}
+            className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
+          >
+            <Plus size={20} />
+            <span>Solicitar Préstamo</span>
+          </button>
+        )}
       </div>
 
       {/* Formulario */}
-      {showForm && (
+      {showForm && isUsuario && (
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-eco-gray-900">
@@ -697,8 +699,8 @@ const Prestamos = () => {
                             </button>
                           </>
                         )}
-                        {/* Botón de finalizar solo aparece si el transporte está EN_USO */}
-                        {prestamo.transporte?.estado === 'EN_USO' && (
+                        {/* Botón de finalizar solo aparece si el transporte está EN_USO y el usuario es ADMIN */}
+                        {isAdmin && prestamo.transporte?.estado === 'EN_USO' && (
                           <button
                             onClick={() => finalizarPrestamo(prestamo)}
                             className="text-eco-blue-600 hover:text-eco-blue-900 p-1"

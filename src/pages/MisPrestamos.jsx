@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Clock, MapPin, Bike, Loader2, ArrowRightCircle } from 'lucide-react'
+import { Clock, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { prestamosAPI, estacionesAPI, transportesAPI } from '../services/api'
 import toast from 'react-hot-toast'
@@ -49,10 +49,7 @@ const MisPrestamos = () => {
     return m
   }, [transportes])
 
-  const prestamoActivo = useMemo(() => {
-    // Suponemos estado 'EN_CURSO' para el activo
-    return prestamos.find(p => p.estado === 'EN_CURSO') || null
-  }, [prestamos])
+  // Se elimina la sección de viaje actual
 
   const renderEstacion = (id) => {
     const est = mapEstacion.get(id)
@@ -70,7 +67,7 @@ const MisPrestamos = () => {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-eco-gray-800">Mis Préstamos</h1>
-        <p className="text-eco-gray-600">Visualiza tu viaje actual y tu historial.</p>
+        <p className="text-eco-gray-600">Visualiza tus préstamos e historial.</p>
       </div>
 
       {loading ? (
@@ -79,40 +76,6 @@ const MisPrestamos = () => {
         </div>
       ) : (
         <>
-          {/* Viaje actual */}
-          <div className="bg-white rounded-xl shadow p-5 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Clock size={18} className="text-eco-green-600" />
-                <h2 className="font-semibold text-eco-gray-800">Viaje actual</h2>
-              </div>
-            </div>
-            {prestamoActivo ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-eco-gray-50">
-                  <div className="text-sm text-eco-gray-500">Desde</div>
-                  <div className="font-medium text-eco-gray-900 flex items-center gap-2">
-                    <MapPin size={16} className="text-eco-green-600" /> {renderEstacion(prestamoActivo.estacionOrigenId)}
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-eco-gray-50">
-                  <div className="text-sm text-eco-gray-500">Hasta</div>
-                  <div className="font-medium text-eco-gray-900 flex items-center gap-2">
-                    <ArrowRightCircle size={16} className="text-eco-green-600" /> {renderEstacion(prestamoActivo.estacionDestinoId)}
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-eco-gray-50">
-                  <div className="text-sm text-eco-gray-500">Vehículo</div>
-                  <div className="font-medium text-eco-gray-900 flex items-center gap-2">
-                    <Bike size={16} className="text-eco-green-600" /> {renderTransporte(prestamoActivo.transporteId)}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-eco-gray-600">No tienes un viaje en curso.</div>
-            )}
-          </div>
-
           {/* Mis préstamos (incluye activos y pasados) */}
           <div className="bg-white rounded-xl shadow p-5 mb-8">
             <div className="flex items-center gap-2 mb-4">
