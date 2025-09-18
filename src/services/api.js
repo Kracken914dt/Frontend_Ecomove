@@ -64,8 +64,6 @@ export const prestamosAPI = {
 
 // Pagos
 export const pagosAPI = {
-  listar: () => api.get('/pagos'),
-  obtenerPorId: (id) => api.get(`/pagos/${id}`),
   checkoutStripe: (payload) => api.post('/pago-online/stripe/checkout', payload),
 }
 

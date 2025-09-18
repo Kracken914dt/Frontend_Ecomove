@@ -364,7 +364,7 @@ const Estaciones = () => {
 
       {/* Lista de estaciones mejorada */}
       <div className="bg-white rounded-2xl shadow-lg border border-eco-gray-100 overflow-hidden animate-slide-up">
-        <div className="p-6 border-b border-eco-gray-200">
+        <div className="px-4 py-4 md:p-6 border-b border-eco-gray-200">
           <h2 className="text-2xl font-bold text-eco-gray-900 flex items-center">
             <Building className="h-6 w-6 mr-3 text-eco-green-600" />
             Lista de Estaciones ({filteredEstaciones.length})
@@ -423,23 +423,23 @@ const Estaciones = () => {
             )}
           </div>
         ) : (
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="p-4 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredEstaciones.map((estacion) => (
                 <div
                   key={estacion.id}
-                  className="bg-gradient-to-br from-white to-eco-green-50 rounded-2xl p-6 shadow-lg border border-eco-gray-200 hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fade-in"
+                  className="bg-gradient-to-br from-white to-eco-green-50 rounded-2xl sm:p-4 md:p-6 shadow-lg border border-eco-gray-200 hover:shadow-xl transition-all duration-300 md:hover:scale-105 animate-fade-in min-w-0"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center">
-                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-eco-green-500 to-eco-green-600 flex items-center justify-center">
+                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-eco-green-500 to-eco-green-600 flex items-center justify-center flex-shrink-0">
                         <Building className="h-6 w-6 text-white" />
                       </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-bold text-eco-gray-900">
+                      <div className="ml-3 md:ml-4 min-w-0">
+                        <h3 className="text-lg md:text-xl font-bold text-eco-gray-900 truncate">
                           {estacion.ubicacion || "Sin ubicación"}
                         </h3>
-                        <p className="text-sm text-eco-gray-500">
+                        <p className="text-xs md:text-sm text-eco-gray-500 truncate">
                           ID: {estacion.id}
                         </p>
                       </div>
@@ -470,7 +470,7 @@ const Estaciones = () => {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-2">
                       <div className="text-center p-3 bg-blue-100 rounded-lg">
                         <p className="text-xs text-eco-gray-600">Disponibles</p>
                         <p className="text-lg font-bold text-blue-700">
