@@ -78,6 +78,13 @@ const Prestamos = () => {
     setSuggestedPrice(price)
   }, [selectedTransport, inicioVal, finVal])
 
+  // Asignar automáticamente el costo basado en la sugerencia para usuarios
+  useEffect(() => {
+    if (isUsuario && suggestedPrice !== null) {
+      setValue('costo', suggestedPrice)
+    }
+  }, [isUsuario, suggestedPrice, setValue])
+
   const cargarDatos = async () => {
     try {
       setLoading(true)
@@ -571,6 +578,7 @@ const Prestamos = () => {
                   })}
                   className="input-field"
                   placeholder="0.00"
+                  readOnly={isUsuario}
                 />
                 {errors.costo && (
                   <p className="text-red-500 text-sm mt-1">{errors.costo.message}</p>
@@ -582,13 +590,19 @@ const Prestamos = () => {
                       {' '}
                       (<span className="text-eco-gray-500">≈ {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(suggestedPrice * USD_TO_COP)}</span>)
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setValue('costo', suggestedPrice)}
-                      className="px-2 py-1 text-xs rounded bg-eco-green-100 text-eco-green-800 hover:bg-eco-green-200"
-                    >
-                      Usar sugerencia
-                    </button>
+                    {isUsuario ? (
+                      <span className="px-2 py-1 text-xs rounded bg-eco-green-50 text-eco-green-700">
+                        Costo asignado automáticamente
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setValue('costo', suggestedPrice)}
+                        className="px-2 py-1 text-xs rounded bg-eco-green-100 text-eco-green-800 hover:bg-eco-green-200"
+                      >
+                        Usar sugerencia
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
