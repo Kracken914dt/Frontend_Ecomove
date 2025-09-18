@@ -26,14 +26,57 @@ const Prestamos = () => {
     type: 'danger'
   })
 
-  const { register, handleSubmit, reset, formState: { errors }, getValues, setValue } = useForm()
+  const { register, handleSubmit, reset, formState: { errors }, getValues, setValue, watch } = useForm()
   const { user } = useAuth()
   const isAdmin = user?.tipo === 'ADMIN'
   const isUsuario = user?.tipo === 'USUARIO'
 
+  const [suggestedPrice, setSuggestedPrice] = useState(null)
+  const USD_TO_COP = 4000 // Tasa estática de referencia; cámbiala si deseas una más actual
+
   useEffect(() => {
     cargarDatos()
   }, [])
+
+  // Helpers para sugerir precio
+  const computeSuggestedPrice = (transport, hours) => {
+    if (!transport || !hours || hours <= 0) return null
+    const tipo = (transport.tipo || '').toUpperCase()
+    const marca = (transport.marca || '').toLowerCase()
+    const vmax = Number(transport.velocidadMaxima || 0)
+
+    // Tarifa base por hora según tipo
+    let base = 2.0
+    if (tipo.includes('BICI')) base = 1.5
+    else if (tipo.includes('SCOOTER')) base = 2.2
+    else if (tipo.includes('MOTO')) base = 3.0
+
+    // Modificador por velocidad máxima (hasta +30% si 30+ km/h)
+    const speedMod = Math.min(vmax / 100, 0.3)
+
+    // Modificador por marca (simple heurística)
+    const premiumBrands = ['xiaomi', 'segway', 'ninebot', 'giant', 'trek']
+    const brandMod = premiumBrands.some(b => marca.includes(b)) ? 0.1 : 0.0
+
+    const price = base * hours * (1 + speedMod) * (1 + brandMod)
+    return Math.max(0, Number(price.toFixed(2)))
+  }
+
+  // Recalcular sugerencia cuando cambien transporte o fechas
+  const inicioVal = watch('inicio')
+  const finVal = watch('fin')
+  useEffect(() => {
+    // Calcular horas de uso
+    const start = inicioVal ? new Date(inicioVal) : null
+    const end = finVal ? new Date(finVal) : null
+    let hours = null
+    if (start && end && !isNaN(start) && !isNaN(end) && end > start) {
+      const diffMs = end - start
+      hours = diffMs / (1000 * 60 * 60)
+    }
+    const price = computeSuggestedPrice(selectedTransport, hours)
+    setSuggestedPrice(price)
+  }, [selectedTransport, inicioVal, finVal])
 
   const cargarDatos = async () => {
     try {
@@ -531,6 +574,22 @@ const Prestamos = () => {
                 />
                 {errors.costo && (
                   <p className="text-red-500 text-sm mt-1">{errors.costo.message}</p>
+                )}
+                {suggestedPrice !== null && (
+                  <div className="mt-2 text-sm text-eco-gray-600 flex items-center gap-3">
+                    <span>
+                      Sugerencia: ${suggestedPrice.toFixed(2)}
+                      {' '}
+                      (<span className="text-eco-gray-500">≈ {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(suggestedPrice * USD_TO_COP)}</span>)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setValue('costo', suggestedPrice)}
+                      className="px-2 py-1 text-xs rounded bg-eco-green-100 text-eco-green-800 hover:bg-eco-green-200"
+                    >
+                      Usar sugerencia
+                    </button>
+                  </div>
                 )}
               </div>
               

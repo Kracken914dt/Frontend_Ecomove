@@ -248,6 +248,38 @@ const Transportes = () => {
                   <p className="text-red-500 text-sm mt-1">{errors.estado.message}</p>
                 )}
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
+                  Marca
+                </label>
+                <select
+                  {...register('marca')}
+                  className="input-field"
+                >
+                  <option value="">Seleccionar marca</option>
+                  {['Xiaomi','Segway','Ninebot','Giant','Trek','Specialized','Yadea','EcoMove'].map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                  {editingTransport && editingTransport.marca && !['Xiaomi','Segway','Ninebot','Giant','Trek','Specialized','Yadea','EcoMove'].includes(editingTransport.marca) && (
+                    <option value={editingTransport.marca}>{editingTransport.marca}</option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-eco-gray-700 mb-2">
+                  Velocidad máxima (km/h)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  {...register('velocidadMaxima')}
+                  className="input-field"
+                  placeholder="Ej: 25"
+                />
+              </div>
             </div>
             
             <div className="flex justify-end space-x-3">
@@ -364,10 +396,18 @@ const Transportes = () => {
                             <div className="text-eco-gray-500 text-xs">
                               Capacidad: {transporte.estacion.capacidad || 0}
                             </div>
+                            <div className="text-eco-gray-500 text-xs">
+                              Marca: {transporte.marca || '—'} · Vmáx: {transporte.velocidadMaxima || 0} km/h
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <span className="text-eco-gray-500 italic">Sin estación asignada</span>
+                        <div>
+                          <div className="text-eco-gray-500 italic">Sin estación asignada</div>
+                          <div className="text-eco-gray-500 text-xs mt-1">
+                            Marca: {transporte.marca || '—'} · Vmáx: {transporte.velocidadMaxima || 0} km/h
+                          </div>
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
