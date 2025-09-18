@@ -62,6 +62,14 @@ export const prestamosAPI = {
   historialPorUsuario: (usuarioId) => api.get(`/prestamos/usuario/${usuarioId}`)
 }
 
+// Tarifas
+export const tarifasAPI = {
+  // Obtener la tarifa por minuto para un tipo de transporte
+  obtenerRate: (tipo) => api.get(`/tarifas/${encodeURIComponent(tipo)}`),
+  // Calcular el costo por tipo y minutos
+  calcular: ({ tipo, minutos }) => api.post('/tarifas/calc', { tipo, minutos })
+}
+
 // Pagos
 export const pagosAPI = {
   checkoutStripe: (payload) => api.post('/pago-online/stripe/checkout', payload),
